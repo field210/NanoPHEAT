@@ -15,7 +15,7 @@ alert_on=function(session,id,title,content,style="danger",append=FALSE){
 alert_off=function(session, bs_id){
     sapply(bs_id,function(x) {
         closeAlert(session,alertId=x)
-        })
+    })
 }
 
 axis_range=function(df,colname,extended=0.1){
@@ -50,64 +50,66 @@ shinyServer(function(input, output, session) {
     
     # define upload ui
     v$ui_upload=  fluidRow(
-            column(width = 4,  
-                wellPanel(style="min-height:200px;",
-                    fileInput(
-                        inputId="file_data", 
-                        label="Your dataset",
-                        accept = c(
-                            "text/csv",
-                            "text/comma-separated-values",
-                            "text/tab-separated-values",
-                            "text/plain",
-                            ".csv"
-                        )
-                    ),
-                    p("Dataset template: ",
-                        a(href = "NanoPHEAT.csv", "NanoPHEAT.csv"))
-                )
-            ),
-            
-            column(width = 2, 
-                wellPanel(style="min-height:200px;",
-                    radioButtons(
-                        inputId="header", 
-                        label = "Header",
-                        choices =  c(Yes=TRUE, No=FALSE),
-                        selected =     TRUE
+        column(width = 4,  
+            wellPanel(style="min-height:200px;",
+                fileInput(
+                    inputId="file_data", 
+                    label="Your dataset",
+                    accept = c(
+                        "text/csv",
+                        "text/comma-separated-values",
+                        "text/tab-separated-values",
+                        "text/plain",
+                        ".csv"
                     )
+                ),
+                p("Dataset template: ",
+                    a(href = "NanoPHEAT.csv", "NanoPHEAT.csv"))
+            )
+        ),
+        
+        column(width = 2, 
+            wellPanel(style="min-height:200px;",
+                radioButtons(
+                    inputId="header", 
+                    label = "Header",
+                    choices =  c(Yes=TRUE, No=FALSE),
+                    selected =     TRUE
                 )
-            ),
-            
-            column(width = 2,
-                wellPanel(style="min-height:200px;",
-                    radioButtons(
-                        inputId="sep", 
-                        label = "Separator",
-                        choices =  c(Comma=",", Semicolon=";",  Tab="\t"),
-                        selected =  ","
-                    )
+            )
+        ),
+        
+        column(width = 2,
+            wellPanel(style="min-height:200px;",
+                radioButtons(
+                    inputId="sep", 
+                    label = "Separator",
+                    choices =  c(Comma=",", Semicolon=";",  Tab="\t"),
+                    selected =  ","
                 )
-            ),
-            
-            column(width = 2,
-                wellPanel(style="min-height:200px;",
-                    radioButtons(
-                        inputId="quote",
-                        label =  "Quote",
-                        choices =  c(None="", "Double"="\"",   "Single"="\'"),
-                        selected =  "\""
-                    )
+            )
+        ),
+        
+        column(width = 2,
+            wellPanel(style="min-height:200px;",
+                radioButtons(
+                    inputId="quote",
+                    label =  "Quote",
+                    choices =  c(None="", "Double"="\"",   "Single"="\'"),
+                    selected =  "\""
                 )
             )
         )
-        
+    )
+    
     
     # read ceint nikc data
     data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
     
     # clear data when change data source
     observeEvent(input$data_source,{
+        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        
         v$data=NULL
         
         updateSelectizeInput(session, 
@@ -157,45 +159,45 @@ shinyServer(function(input, output, session) {
     })
     
     # define load button
-   observeEvent(input$load_button, {
-       alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
-       
-       if (input$data_source==1) {
-           v$data=data_ceint
-       } else {
-        user_datafile=input$file_data
-        if (is.null(user_datafile)) { 
-            alert_on(session,
-                "alert_file",
-                "No file found!",
-                "Please select a file to proceed."
+    observeEvent(input$load_button, {
+        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        
+        if (input$data_source==1) {
+            v$data=data_ceint
+        } else {
+            user_datafile=input$file_data
+            if (is.null(user_datafile)) { 
+                alert_on(session,
+                    "alert_file",
+                    "No file found!",
+                    "Please select a file to proceed."
                 )
-            return()
+                return()
+            }
+            data_user=read.csv(user_datafile$datapath, 
+                header=as.logical(input$header),
+                sep=input$sep, 
+                quote=input$quote,
+                stringsAsFactors=FALSE)
+            
+            v$data=switch(input$data_source,
+                "2"=data_user,
+                "3"=bind_rows(data_user,data_ceint)
+            )
         }
-        data_user=read.csv(user_datafile$datapath, 
-            header=as.logical(input$header),
-            sep=input$sep, 
-            quote=input$quote,
-            stringsAsFactors=FALSE)
-           
-           v$data=switch(input$data_source,
-               "2"=data_user,
-               "3"=bind_rows(data_user,data_ceint)
-           )
-       }
-       
-       # initialize the enm select (level 1)
-       enm=v$data %>% 
-           select(Nanomaterial) %>% 
-           distinct(Nanomaterial)%>% 
-           .[[1]]
-       
-       updateSelectizeInput(session, 
-           inputId='select_enm', 
-           choices=enm, 
-           server=F
-       )
-       
+        
+        # initialize the enm select (level 1)
+        enm=v$data %>% 
+            select(Nanomaterial) %>% 
+            distinct(Nanomaterial)%>% 
+            .[[1]]
+        
+        updateSelectizeInput(session, 
+            inputId='select_enm', 
+            choices=enm, 
+            server=F
+        )
+        
     })
     
     # process uploaded data after click the button
@@ -203,7 +205,7 @@ shinyServer(function(input, output, session) {
         options = list(pageLength = 10)
     )
     
-
+    
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
@@ -313,7 +315,7 @@ shinyServer(function(input, output, session) {
                 "alert_filter",  
                 "No option selected!", 
                 "Please select options above."
-                )
+            )
             
             return()
         }
@@ -340,7 +342,7 @@ shinyServer(function(input, output, session) {
                 "alert_subset", 
                 "No dataset selected!",  
                 "Please select targeted dataset in the \"filter\" tab before plot."
-                )
+            )
             
             return()
         }
@@ -357,7 +359,7 @@ shinyServer(function(input, output, session) {
     
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
-
+        v$fit_stat=NULL
         alert_off(session, c("bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
         v$fit_method=input$select_fit_method
@@ -459,8 +461,6 @@ shinyServer(function(input, output, session) {
         if (v$fit_method=="") { 
             return()
         }
-        
-        
         v$formula
     })
     
@@ -470,7 +470,6 @@ shinyServer(function(input, output, session) {
         if (v$fit_method=="") { 
             return()
         }
-        
         v$parameter
     })
     
@@ -481,7 +480,7 @@ shinyServer(function(input, output, session) {
                 "alert_plot", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
-                )
+            )
             
             return()
         }
@@ -493,7 +492,7 @@ shinyServer(function(input, output, session) {
                 "alert_curve",
                 "Invalid parameter!", 
                 "Please input number only to proceed."
-                )
+            )
             
             return()
         }
@@ -505,25 +504,25 @@ shinyServer(function(input, output, session) {
     
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
+        v$fit_stat=NULL
+        
         if(is.null( v$plot)) {
             alert_on(session, 
                 "alert_plot", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
-                )
-            
+            )
             return()
         }
         
-        alert_off(session, c("bs_alert_plot", "bs_alert_curve", "bs_alert_fit_stat", "bs_alert_fitted"))
+        alert_off(session, c("bs_alert_plot", "bs_alert_curve", "bs_alert_fitted"))
         
         if(v$fit_method=="") {
             alert_on(session, 
                 "alert_fit_method", 
                 "No fitting method selected!",
                 "Please select a fitting method to proceed."
-                )
-            
+            )
             return()
         }
         
@@ -538,47 +537,55 @@ shinyServer(function(input, output, session) {
             v$plot=v$plot+
                 stat_function(fun =function(x) { 
                     linear_alpha * x + linear_beta
-                    },
+                },
                     color="red"
-                    )
+                )
             v$fit_stat=summary(fit)
         } 
         
         if(v$fit_method=="logistic"){
             fit=try(
                 nlsLM(Response~l / (1 + exp(-k * (Dose - x0 ))),
-                data=v$data_filtered, 
-                start = list(l=input$logistic_l, 
-                    k=input$logistic_k, 
-                    x0=input$logistic_x0)
+                    data=v$data_filtered, 
+                    start = list(l=input$logistic_l, 
+                        k=input$logistic_k, 
+                        x0=input$logistic_x0)
                 ),
                 silent = T
-                )
+            )
             
-            if(length(fit)==1){
+            if(length(fit)==1 ){
+                # singular gradient matrix at initial parameter estimates
                 alert_on(session, 
                     "alert_fitted",
                     "Fitting failed!",  
                     "Please select reasonable value for the initial parameters and try again."
-                    )
+                )
             } else {
+                if(!fit$convInfo$isConv){
+                    # cannot converge, need change formula
+                    alert_on(session, 
+                        "alert_fitted",
+                        "Fitting failed!",  
+                        "The chosen formula does not fit the data. Please try another formula.",
+                        "warning"
+                    )
+                } else{
                 alert_off(session, c("bs_alert_fitted"))
                 
                 logistic_l=coef(fit)["l"] 
                 logistic_k=coef(fit)["k"] 
                 logistic_x0=coef(fit)["x0"] 
                 
-            v$plot=v$plot+
-                stat_function(fun =function(x) { 
-                    logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
+                v$plot=v$plot+
+                    stat_function(fun =function(x) { 
+                        logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
                     },
-                    color="red")
+                        color="red")
                 v$fit_stat=summary(fit)
-                
+            }
             }
         }
-        
-        
     })
     
     
@@ -590,7 +597,7 @@ shinyServer(function(input, output, session) {
                 "No fitting statistics available!", 
                 "Please try to fit the dataset first.",
                 "info",  
-                )
+            )
             
             return(invisible(NULL))
         }
