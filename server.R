@@ -1,5 +1,15 @@
+alert=function(session,anchorId,title,content,style="danger",append=FALSE){
+    createAlert(
+        session=session, 
+        anchorId=anchorId, 
+        alertId=paste0("bs_", anchorId),  
+        title = title,  
+        content = content,
+        style=style,  
+        append = append )
+}
 
-
+# server.r
 shinyServer(function(input, output, session) {
     # read ceint nikc data
     data=read.csv("data.csv",stringsAsFactors=FALSE)
@@ -9,18 +19,15 @@ shinyServer(function(input, output, session) {
         inFile=input$file_data
         
         if (is.null(inFile)) { 
-            createAlert(session, 
-                anchorId="alert_upload", 
-                alertId="alertid_upload",   
-                title = "No file found!",  
-                content = "Please select a file to proceed.",
-                style="danger",  
-                append = FALSE )
-            
+            alert(session,
+                "alert_upload",
+                "No file found!",
+                "Please select a file to proceed."
+                )
             return()
         }
         
-        closeAlert(session, "alertid_upload")
+        closeAlert(session, "bs_alert_upload")
         
         read.csv(inFile$datapath, header=as.logical(input$header),
             sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
@@ -138,19 +145,17 @@ shinyServer(function(input, output, session) {
                 input$select_endpoint=="" | 
                 input$select_organism=="" | 
                 input$select_matrix=="") {
-            createAlert(session, 
-                anchorId="alert_filter", 
-                alertId="alertid_filter",   
-                title = "No option selected!",  
-                content = "Please select options above.",
-                style="danger",  
-                append = FALSE )
+            alert(session, 
+                "alert_filter",  
+                "No option selected!", 
+                "Please select options above."
+                )
             
             return()
         }
         
-        closeAlert(session, "alertid_filter")
-        closeAlert(session, "alertid_plot")
+        closeAlert(session, "bs_alert_filter")
+        closeAlert(session, "bs_alert_plot")
         
         v$data_filtered=data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -174,19 +179,17 @@ shinyServer(function(input, output, session) {
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
         if (is.null(v$data_filtered)) { 
-            createAlert(session, 
-                anchorId="alert_plot", 
-                alertId="alertid_plot",   
-                title = "No dataset selected!",  
-                content = "Please select targeted dataset in the \"filter\" tab before plot.",
-                style="danger",  
-                append = FALSE )
+            alert(session, 
+                "alert_plot", 
+                "No dataset selected!",  
+                "Please select targeted dataset in the \"filter\" tab before plot."
+                )
             
             return()
         }
         
-        closeAlert(session, "alertid_plot")
-        closeAlert(session, "alertid_fitting")
+        closeAlert(session, "bs_alert_plot")
+        closeAlert(session, "bs_alert_fitting")
         
         v$plot= ggplot( data=v$data_filtered, aes(x=Dose,y=Response)) +
             geom_point(size=5)+ 
@@ -208,8 +211,8 @@ shinyServer(function(input, output, session) {
     
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
-        closeAlert(session, "alertid_fit_method")
-        closeAlert(session, "alertid_curve")
+        closeAlert(session, "bs_alert_fit_method")
+        closeAlert(session, "bs_alert_curve")
         
         v$fit_method=input$select_fit_method
         
@@ -327,32 +330,28 @@ shinyServer(function(input, output, session) {
     # show function plot
     observeEvent(input$curve_button, { 
         if(is.null( v$plot)) { 
-            createAlert(session, 
-                anchorId="alert_fitting", 
-                alertId="alertid_fitting",   
-                title = "No plot found!",  
-                content = "Please plot dataset to proceed.",
-                style="danger",  
-                append = FALSE )
+            alert(session, 
+                "alert_fitting", 
+                "No plot found!", 
+                "Please plot dataset to proceed."
+                )
             
             return()
         }
         
-        closeAlert(session, "alertid_fitting")
+        closeAlert(session, "bs_alert_fitting")
         
         if(is.null( v$func(0))) { 
-            createAlert(session, 
-                anchorId="alert_curve", 
-                alertId="alertid_curve",   
-                title = "Invalid parameter!",  
-                content = "Please input number only to proceed.",
-                style="danger",  
-                append = FALSE )
+            alert(session,
+                "alert_curve",
+                "Invalid parameter!", 
+                "Please input number only to proceed."
+                )
             
             return()
         }
         
-        closeAlert(session, "alertid_curve")
+        closeAlert(session, "bs_alert_curve")
         
         
         v$plot=v$plot+  stat_function(fun = v$func,color="blue")
@@ -361,44 +360,75 @@ shinyServer(function(input, output, session) {
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
         if(is.null( v$plot)) {
-            createAlert(session, 
-                anchorId="alert_fitting", 
-                alertId="alertid_fitting",   
-                title = "No plot found!",  
-                content = "Please plot dataset to proceed.",
-                style="danger",  
-                append = FALSE )
+            alert(session, 
+                "alert_fitting", 
+                "No plot found!", 
+                "Please plot dataset to proceed."
+                )
             
             return()
         }
         
-        closeAlert(session, "alertid_fitting")
-        closeAlert(session, "alert_fit_stat")
+        closeAlert(session, "bs_alert_fitting")
+        closeAlert(session, "bs_alert_fit_stat")
         
         if(v$fit_method=="") {
-            createAlert(session, 
-                anchorId="alert_fit_method", 
-                alertId="alertid_fit_method",   
-                title = "No fitting method selected!",  
-                content = "Please select a fitting method to proceed.",
-                style="danger",  
-                append = FALSE )
+            alert(session, 
+                "alert_fit_method", 
+                "No fitting method selected!",
+                "Please select a fitting method to proceed."
+                )
             
             return()
         }
         
         if (v$fit_method=="linear") {
             fit=lm(Response~Dose, data=v$data_filtered)
-            v$fit_stat=summary(fit)
+            
+            linear_alpha=coef(fit)["Dose"]
+            linear_beta=coef(fit)["(Intercept)"] 
+            
             v$plot=v$plot+
-                geom_smooth(method = "lm",formula ="y~x",color="red",se=F)
+                stat_function(fun =function(x) { 
+                    linear_alpha * x + linear_beta
+                    },
+                    color="red"
+                    )
+            v$fit_stat=summary(fit)
         } 
         
         if(v$fit_method=="logistic"){
-            fit=nls(Response~l / (1 + exp(-k * (Dose - x0 ))), data=v$data_filtered, start = list(l=input$logistic_l, k=input$logistic_k, x0=input$logistic_x0))
-            v$fit_stat=summary(fit)
+            fit=try(
+                nlsLM(Response~l / (1 + exp(-k * (Dose - x0 ))),
+                data=v$data_filtered, 
+                start = list(l=input$logistic_l, 
+                    k=input$logistic_k, 
+                    x0=input$logistic_x0)
+                ),
+                silent = T
+                )
+            
+            if(length(fit)==1){
+                alert(session, 
+                    "alert_fitted",
+                    "Fitting failed!",  
+                    "Please select reasonable value for the initial parameters and try again."
+                    )
+            } else {
+                closeAlert(session, "bs_alert_fitted")
+                
+                logistic_l=coef(fit)["l"] 
+                logistic_k=coef(fit)["k"] 
+                logistic_x0=coef(fit)["x0"] 
+                
             v$plot=v$plot+
-                geom_smooth(method = "nls", formula = "y ~ l / (1 + exp(-k * (x - x0 )))", start = list(l=input$logistic_l, k=input$logistic_k, x0=input$logistic_x0),color="red",se=F)
+                stat_function(fun =function(x) { 
+                    logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
+                    },
+                    color="red")
+                v$fit_stat=summary(fit)
+                
+            }
         }
         
         
@@ -408,18 +438,17 @@ shinyServer(function(input, output, session) {
     # show fitting statistics 
     output$fit_stat <- renderPrint({
         if (is.null(v$fit_stat)) { 
-            createAlert(session, 
-                anchorId="alert_fit_stat", 
-                alertId="alertid_fit_stat",   
-                title = "No fitting statistics available!",  
-                content = "Please try to fit the dataset first.",
-                style="info",  
-                append = FALSE )
+            alert(session, 
+                "alert_fit_stat",
+                "No fitting statistics available!", 
+                "Please try to fit the dataset first.",
+                "info",  
+                )
             
             return(invisible(NULL))
         }
         
-        closeAlert(session, "alert_fit_stat")
+        closeAlert(session, "bs_alert_fit_stat")
         
         v$fit_stat
     })

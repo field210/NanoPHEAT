@@ -1,9 +1,13 @@
-library("stats")
-library("dplyr")
-library("ggplot2")
-library("gridExtra")
-library("shinyBS")
 
+# install package if not installed
+list.of.packages <- c("minpack.lm","ggplot2", "dplyr","gridExtra","shinyBS")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# library packages
+sapply(list.of.packages, library,character.only=T)
+
+# ui.r
 shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
     
     tabPanel("Introduction",
@@ -249,6 +253,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
                             bsAlert("alert_fitting"),
                             bsAlert("alert_fit_method"),
                             bsAlert("alert_curve"),
+                            bsAlert("alert_fitted"),
                             
                             plotOutput("plot")
                         ),
