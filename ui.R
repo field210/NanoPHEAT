@@ -34,70 +34,29 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
     ),
     
     tabPanel("Load",
-        titlePanel("Upload your own data"),
+        titlePanel("data source"),
         
         fluidRow(
             column(width = 10,
-                p("If you want a sample .csv file to upload, you can first download the sample",
-                    a(href = "NanoPHEAT.csv", "NanoPHEAT.csv"), 
-                    "file, and then try uploading them.")
+                p("This tool uses Choose dataset."),  
+                wellPanel(
+                    radioButtons(
+                        inputId="data_source", 
+                        label = "Data source",
+                        choices =  c("CEINT-NIKC dataset"=1, "Your own dataset"=2,  "CEINT-NIKC dataset + Your own dataset"=3),
+                        selected =  1
+                    )
+                )
             )
         ),
+        
+        # show upload ui
+        uiOutput("ui_upload"),
         
-        fluidRow(
-            column(width = 4,  
-                wellPanel(style="min-height:160px;",
-                    fileInput(
-                        inputId="file_data", 
-                        label=NULL,
-                        accept = c(
-                            "text/csv",
-                            "text/comma-separated-values",
-                            "text/tab-separated-values",
-                            "text/plain",
-                            ".csv"
-                        )
-                    )
-                )
-            ),
-            
-            column(width = 2, 
-                wellPanel(style="min-height:160px;",
-                    radioButtons(
-                        inputId="header", 
-                        label = "Header",
-                        choices =  c(Yes=TRUE, No=FALSE),
-                        selected =     TRUE
-                    )
-                )
-            ),
-            
-            column(width = 2,
-                wellPanel(style="min-height:160px;",
-                    radioButtons(
-                        inputId="sep", 
-                        label = "Separator",
-                        choices =  c(Comma=",", Semicolon=";",  Tab="\t"),
-                        selected =  ","
-                    )
-                )
-            ),
-            
-            column(width = 2,
-                wellPanel(style="min-height:160px;",
-                    radioButtons(
-                        inputId="quote",
-                        label =  "Quote",
-                        choices =  c(None="", "Double"="\"",   "Single"="\'"),
-                        selected =  "\""
-                    )
-                )
-            )
-        ),
         
         fluidRow(
             column(width = 5,   
-                actionButton("upload_button", "Process uploaded file",class="btn btn-primary")
+                actionButton("load_button", "Process dataset",class="btn btn-primary")
             ),
             column(width = 5,   
                 bsAlert("alert_file")

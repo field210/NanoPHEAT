@@ -1,3 +1,5 @@
+# alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"
+
 # define public function
 alert_on=function(session,id,title,content,style="danger",append=FALSE){
     createAlert(
@@ -43,14 +45,126 @@ plot_raw=function(df){
 
 # server.r
 shinyServer(function(input, output, session) {
-    # read ceint nikc data
-    data=read.csv("data.csv",stringsAsFactors=FALSE)
+    # create reactive value for resetting
+    v <- reactiveValues()
     
-    # define upload button
-    upload_action=eventReactive(input$upload_button, { 
-        inFile=input$file_data
+    # define upload ui
+    v$ui_upload=  fluidRow(
+            column(width = 4,  
+                wellPanel(style="min-height:200px;",
+                    fileInput(
+                        inputId="file_data", 
+                        label="Your dataset",
+                        accept = c(
+                            "text/csv",
+                            "text/comma-separated-values",
+                            "text/tab-separated-values",
+                            "text/plain",
+                            ".csv"
+                        )
+                    ),
+                    p("Dataset template: ",
+                        a(href = "NanoPHEAT.csv", "NanoPHEAT.csv"))
+                )
+            ),
+            
+            column(width = 2, 
+                wellPanel(style="min-height:200px;",
+                    radioButtons(
+                        inputId="header", 
+                        label = "Header",
+                        choices =  c(Yes=TRUE, No=FALSE),
+                        selected =     TRUE
+                    )
+                )
+            ),
+            
+            column(width = 2,
+                wellPanel(style="min-height:200px;",
+                    radioButtons(
+                        inputId="sep", 
+                        label = "Separator",
+                        choices =  c(Comma=",", Semicolon=";",  Tab="\t"),
+                        selected =  ","
+                    )
+                )
+            ),
+            
+            column(width = 2,
+                wellPanel(style="min-height:200px;",
+                    radioButtons(
+                        inputId="quote",
+                        label =  "Quote",
+                        choices =  c(None="", "Double"="\"",   "Single"="\'"),
+                        selected =  "\""
+                    )
+                )
+            )
+        )
         
-        if (is.null(inFile)) { 
+    
+    # read ceint nikc data
+    data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
+    
+    # clear data when change data source
+    observeEvent(input$data_source,{
+        v$data=NULL
+        
+        updateSelectizeInput(session, 
+            inputId='select_enm', 
+            choices="", 
+            options=list(
+                placeholder="Select an option",
+                onInitialize=I("function() { this.setValue(''); }")
+            ),
+            server=F
+        )
+        updateSelectizeInput(session, 
+            inputId='select_endpoint', 
+            choices="", 
+            options=list(
+                placeholder="Select an option",
+                onInitialize=I("function() { this.setValue(''); }")
+            ),
+            server=F
+        )
+        updateSelectizeInput(session, 
+            inputId='select_organism', 
+            choices="", 
+            options=list(
+                placeholder="Select an option",
+                onInitialize=I("function() { this.setValue(''); }")
+            ),
+            server=F
+        )
+        updateSelectizeInput(session, 
+            inputId='select_matrix', 
+            choices="", 
+            options=list(
+                placeholder="Select an option",
+                onInitialize=I("function() { this.setValue(''); }")
+            ),
+            server=F
+        )
+    } )
+    
+    # show upload ui
+    output$ui_upload <- renderUI({
+        if (input$data_source==1) { 
+            return()
+        }
+        v$ui_upload
+    })
+    
+    # define load button
+   observeEvent(input$load_button, {
+       alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+       
+       if (input$data_source==1) {
+           v$data=data_ceint
+       } else {
+        user_datafile=input$file_data
+        if (is.null(user_datafile)) { 
             alert_on(session,
                 "alert_file",
                 "No file found!",
@@ -58,35 +172,46 @@ shinyServer(function(input, output, session) {
                 )
             return()
         }
-        
-        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
-        
-        read.csv(inFile$datapath, header=as.logical(input$header),
-            sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
+        data_user=read.csv(user_datafile$datapath, 
+            header=as.logical(input$header),
+            sep=input$sep, 
+            quote=input$quote,
+            stringsAsFactors=FALSE)
+           
+           v$data=switch(input$data_source,
+               "2"=data_user,
+               "3"=bind_rows(data_user,data_ceint)
+           )
+       }
+       
+       # initialize the enm select (level 1)
+       enm=v$data %>% 
+           select(Nanomaterial) %>% 
+           distinct(Nanomaterial)%>% 
+           .[[1]]
+       
+       updateSelectizeInput(session, 
+           inputId='select_enm', 
+           choices=enm, 
+           server=F
+       )
+       
     })
     
     # process uploaded data after click the button
-    output$table_upload <- renderDataTable(upload_action(),
+    output$table_upload <- renderDataTable(v$data,
         options = list(pageLength = 10)
     )
     
-    # initialize the enm select (level 1)
-    enm=data %>% 
-        select(Nanomaterial) %>% 
-        distinct(Nanomaterial)%>% 
-        .[[1]]
-    updateSelectizeInput(session, 
-        inputId='select_enm', 
-        choices=enm, 
-        server=F
-    )
-    
-    # create reactive value for resetting
-    v <- reactiveValues()
+
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
-        endpoint=data %>% 
+        if(input$select_enm==""){
+            return()
+        }
+        
+        endpoint=v$data %>% 
             filter(Nanomaterial==input$select_enm ) %>% 
             select(Endpoint) %>% 
             distinct(Endpoint)%>% 
@@ -123,7 +248,10 @@ shinyServer(function(input, output, session) {
     
     # update organism select after changing endpoint value (level 3)
     observeEvent(input$select_endpoint, {
-        organism=data %>% 
+        if(input$select_endpoint==""){
+            return()
+        }
+        organism=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint ) %>% 
             select(Organism) %>% 
@@ -152,7 +280,11 @@ shinyServer(function(input, output, session) {
     
     # update matrix select after changing organism value (level 4)
     observeEvent(input$select_organism, {
-        matrix=data %>% 
+        if(input$select_organism==""){
+            return()
+        }
+        
+        matrix=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint, 
                 Organism==input$select_organism ) %>% 
@@ -188,7 +320,7 @@ shinyServer(function(input, output, session) {
         
         alert_off(session, c("bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
-        v$data_filtered=data %>% 
+        v$data_filtered=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint, 
                 Organism==input$select_organism,
