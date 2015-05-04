@@ -1,12 +1,18 @@
-alert=function(session,anchorId,title,content,style="danger",append=FALSE){
+alert_on=function(session,id,title,content,style="danger",append=FALSE){
     createAlert(
         session=session, 
-        anchorId=anchorId, 
-        alertId=paste0("bs_", anchorId),  
+        anchorId=id, 
+        alertId=paste0("bs_", id),  
         title = title,  
         content = content,
         style=style,  
         append = append )
+}
+
+alert_off=function(session, bs_id){
+    sapply(bs_id,function(x) {
+        closeAlert(session,alertId=x)
+        })
 }
 
 # server.r
@@ -19,7 +25,7 @@ shinyServer(function(input, output, session) {
         inFile=input$file_data
         
         if (is.null(inFile)) { 
-            alert(session,
+            alert_on(session,
                 "alert_upload",
                 "No file found!",
                 "Please select a file to proceed."
@@ -27,7 +33,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_upload")
+        alert_off(session, c("bs_alert_upload"))
         
         read.csv(inFile$datapath, header=as.logical(input$header),
             sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
@@ -145,7 +151,7 @@ shinyServer(function(input, output, session) {
                 input$select_endpoint=="" | 
                 input$select_organism=="" | 
                 input$select_matrix=="") {
-            alert(session, 
+            alert_on(session, 
                 "alert_filter",  
                 "No option selected!", 
                 "Please select options above."
@@ -154,8 +160,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_filter")
-        closeAlert(session, "bs_alert_plot")
+        alert_off(session, c("bs_alert_filter", "bs_alert_plot"))
         
         v$data_filtered=data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -179,7 +184,7 @@ shinyServer(function(input, output, session) {
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
         if (is.null(v$data_filtered)) { 
-            alert(session, 
+            alert_on(session, 
                 "alert_plot", 
                 "No dataset selected!",  
                 "Please select targeted dataset in the \"filter\" tab before plot."
@@ -188,8 +193,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_plot")
-        closeAlert(session, "bs_alert_fitting")
+        alert_off(session, c("bs_alert_plot", "bs_alert_fitting"))
         
         v$plot= ggplot( data=v$data_filtered, aes(x=Dose,y=Response)) +
             geom_point(size=5)+ 
@@ -211,8 +215,7 @@ shinyServer(function(input, output, session) {
     
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
-        closeAlert(session, "bs_alert_fit_method")
-        closeAlert(session, "bs_alert_curve")
+        alert_off(session, c("bs_alert_fit_method", "bs_alert_curve"))
         
         v$fit_method=input$select_fit_method
         
@@ -330,7 +333,7 @@ shinyServer(function(input, output, session) {
     # show function plot
     observeEvent(input$curve_button, { 
         if(is.null( v$plot)) { 
-            alert(session, 
+            alert_on(session, 
                 "alert_fitting", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
@@ -339,10 +342,10 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_fitting")
+        alert_off(session,c("bs_alert_fitting"))
         
         if(is.null( v$func(0))) { 
-            alert(session,
+            alert_on(session,
                 "alert_curve",
                 "Invalid parameter!", 
                 "Please input number only to proceed."
@@ -351,7 +354,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_curve")
+        alert_off(session, c("bs_alert_curve"))
         
         
         v$plot=v$plot+  stat_function(fun = v$func,color="blue")
@@ -360,7 +363,7 @@ shinyServer(function(input, output, session) {
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
         if(is.null( v$plot)) {
-            alert(session, 
+            alert_on(session, 
                 "alert_fitting", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
@@ -369,11 +372,10 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        closeAlert(session, "bs_alert_fitting")
-        closeAlert(session, "bs_alert_fit_stat")
+        alert_off(session, c("bs_alert_fitting", "bs_alert_fit_stat"))
         
         if(v$fit_method=="") {
-            alert(session, 
+            alert_on(session, 
                 "alert_fit_method", 
                 "No fitting method selected!",
                 "Please select a fitting method to proceed."
@@ -409,13 +411,13 @@ shinyServer(function(input, output, session) {
                 )
             
             if(length(fit)==1){
-                alert(session, 
+                alert_on(session, 
                     "alert_fitted",
                     "Fitting failed!",  
                     "Please select reasonable value for the initial parameters and try again."
                     )
             } else {
-                closeAlert(session, "bs_alert_fitted")
+                alert_off(session, c("bs_alert_fitted"))
                 
                 logistic_l=coef(fit)["l"] 
                 logistic_k=coef(fit)["k"] 
@@ -438,7 +440,7 @@ shinyServer(function(input, output, session) {
     # show fitting statistics 
     output$fit_stat <- renderPrint({
         if (is.null(v$fit_stat)) { 
-            alert(session, 
+            alert_on(session, 
                 "alert_fit_stat",
                 "No fitting statistics available!", 
                 "Please try to fit the dataset first.",
@@ -448,7 +450,7 @@ shinyServer(function(input, output, session) {
             return(invisible(NULL))
         }
         
-        closeAlert(session, "bs_alert_fit_stat")
+        alert_off(session, c("bs_alert_fit_stat"))
         
         v$fit_stat
     })
