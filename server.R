@@ -1,3 +1,4 @@
+# define public function
 alert_on=function(session,id,title,content,style="danger",append=FALSE){
     createAlert(
         session=session, 
@@ -15,6 +16,31 @@ alert_off=function(session, bs_id){
         })
 }
 
+axis_range=function(df,colname,extended=0.1){
+    min=min(df[colname])
+    max=max(df[colname])
+    lower=min-(max-min)*extended
+    upper=max+(max-min)*extended
+    c(lower,upper)
+}
+
+plot_raw=function(df){
+    dose_range=axis_range(df,"Dose")
+    response_range=axis_range(df,"Response")
+    
+    ggplot( data=df, aes(x=Dose,y=Response)) +
+        geom_point(size=5)+ 
+        coord_cartesian(xlim=dose_range,ylim=response_range)+ 
+        labs(title = "Dose-response curve") + 
+        theme_bw() + 
+        theme(text=element_text(size=16), 
+            plot.title=element_text(vjust=3), 
+            axis.title.y=element_text(vjust=3), 
+            axis.title.x=element_text(vjust=-3), 
+            plot.margin=unit(c(1, 1, 1, 1), "cm")
+        )
+}
+
 # server.r
 shinyServer(function(input, output, session) {
     # read ceint nikc data
@@ -26,14 +52,14 @@ shinyServer(function(input, output, session) {
         
         if (is.null(inFile)) { 
             alert_on(session,
-                "alert_upload",
+                "alert_file",
                 "No file found!",
                 "Please select a file to proceed."
                 )
             return()
         }
         
-        alert_off(session, c("bs_alert_upload"))
+        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
         read.csv(inFile$datapath, header=as.logical(input$header),
             sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
@@ -160,19 +186,13 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, c("bs_alert_filter", "bs_alert_plot"))
+        alert_off(session, c("bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
         v$data_filtered=data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint, 
                 Organism==input$select_organism,
                 Matrix==input$select_matrix) 
-        
-        v$dose_lower=min(v$data_filtered$Dose)-(max(v$data_filtered$Dose)-min(v$data_filtered$Dose))*0.1
-        v$dose_upper=max(v$data_filtered$Dose)+(max(v$data_filtered$Dose)-min(v$data_filtered$Dose))*0.1
-        
-        v$response_lower=min(v$data_filtered$Response)-(max(v$data_filtered$Response)-min(v$data_filtered$Response))*0.1
-        v$response_upper=max(v$data_filtered$Response)+(max(v$data_filtered$Response)-min(v$data_filtered$Response))*0.1
     })
     
     # show filtered data after click the button
@@ -185,7 +205,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$plot_button, { 
         if (is.null(v$data_filtered)) { 
             alert_on(session, 
-                "alert_plot", 
+                "alert_subset", 
                 "No dataset selected!",  
                 "Please select targeted dataset in the \"filter\" tab before plot."
                 )
@@ -193,19 +213,9 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, c("bs_alert_plot", "bs_alert_fitting"))
+        alert_off(session, c("bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
-        v$plot= ggplot( data=v$data_filtered, aes(x=Dose,y=Response)) +
-            geom_point(size=5)+ 
-            coord_cartesian(xlim=c(v$dose_lower,v$dose_upper),ylim=c(v$response_lower,v$response_upper))+ 
-            labs(title = "Dose-response curve") + 
-            theme_bw() + 
-            theme(text=element_text(size=16), 
-                plot.title=element_text(vjust=3), 
-                axis.title.y=element_text(vjust=3), 
-                axis.title.x=element_text(vjust=-3), 
-                plot.margin=unit(c(1, 1, 1, 1), "cm")
-            )
+        v$plot= plot_raw(v$data_filtered)
     })
     
     # show plot without fitting 
@@ -215,11 +225,13 @@ shinyServer(function(input, output, session) {
     
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
-        alert_off(session, c("bs_alert_fit_method", "bs_alert_curve"))
+
+        alert_off(session, c("bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
         v$fit_method=input$select_fit_method
         
         if(v$fit_method=="linear"){
+            
             v$formula=withMathJax('$$y=\\alpha+\\beta x$$')
             v$func=function(x) { 
                 isolate({ 
@@ -334,7 +346,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$curve_button, { 
         if(is.null( v$plot)) { 
             alert_on(session, 
-                "alert_fitting", 
+                "alert_plot", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
                 )
@@ -342,7 +354,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session,c("bs_alert_fitting"))
+        alert_off(session,c("bs_alert_plot", "bs_alert_curve", "bs_alert_fitted"))
         
         if(is.null( v$func(0))) { 
             alert_on(session,
@@ -354,9 +366,8 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, c("bs_alert_curve"))
-        
-        
+        alert_off(session, c("bs_alert_curve", "bs_alert_fitted"))
+        v$plot= plot_raw(v$data_filtered)
         v$plot=v$plot+  stat_function(fun = v$func,color="blue")
     }) 
     
@@ -364,7 +375,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$fit_button, { 
         if(is.null( v$plot)) {
             alert_on(session, 
-                "alert_fitting", 
+                "alert_plot", 
                 "No plot found!", 
                 "Please plot dataset to proceed."
                 )
@@ -372,7 +383,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, c("bs_alert_fitting", "bs_alert_fit_stat"))
+        alert_off(session, c("bs_alert_plot", "bs_alert_curve", "bs_alert_fit_stat", "bs_alert_fitted"))
         
         if(v$fit_method=="") {
             alert_on(session, 
@@ -383,6 +394,8 @@ shinyServer(function(input, output, session) {
             
             return()
         }
+        
+        v$plot= plot_raw(v$data_filtered)
         
         if (v$fit_method=="linear") {
             fit=lm(Response~Dose, data=v$data_filtered)

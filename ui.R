@@ -100,7 +100,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
                 actionButton("upload_button", "Process uploaded file",class="btn btn-primary")
             ),
             column(width = 5,   
-                bsAlert("alert_upload")
+                bsAlert("alert_file")
             )
         ),
         
@@ -249,8 +249,8 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
                             # show formula and fitting parameter
                             uiOutput("text_parameter"),
                             
+                            bsAlert("alert_subset"),
                             bsAlert("alert_plot"),
-                            bsAlert("alert_fitting"),
                             bsAlert("alert_fit_method"),
                             bsAlert("alert_curve"),
                             bsAlert("alert_fitted"),
