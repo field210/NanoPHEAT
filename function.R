@@ -1,6 +1,6 @@
 
 # install package if not installed
-list.of.packages <- c("minpack.lm","ggplot2", "dplyr","gridExtra","shinyBS")
+list.of.packages <- c("minpack.lm","ggplot2", "dplyr","gridExtra","shiny","shinyBS")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -25,6 +25,32 @@ alert_off=function(session, bs_id){
     sapply(bs_id,function(x) {
         closeAlert(session,alertId=x)
     })
+}
+
+# reset select options
+reset_select=function(session,inputId){
+    sapply(inputId,function(x) {
+        updateSelectizeInput(
+            session=session, 
+            inputId=x, 
+            choices="", 
+            options=list(
+                placeholder="Select an option",
+                onInitialize=I("function() { this.setValue(''); }")
+            ),
+            server=F
+        )
+    })
+}
+
+# choose select option
+choose_select=function(session,inputId,choices){
+    updateSelectizeInput(
+        session=session, 
+        inputId=inputId, 
+        choices=choices, 
+        server=F
+    )
 }
 
 # set axis range for plot

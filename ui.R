@@ -71,7 +71,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
         
         fluidRow(
             column(width = 10,
-                p("Filter Filter Filter Filter Filter Filter Filter Filter Filter Filter Filter Filter ")
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder ")
             )
         ),
         
@@ -152,7 +152,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
         
         fluidRow(
             column(width = 10,
-                p("Model Model Model Model Model Model Model Model Model Model Model Model ")
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ")
             )
         ),
         
@@ -229,17 +229,17 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
         
         fluidRow(
             column(width = 10,
-                p("Model Model Model Model Model Model Model Model Model Model Model Model ")
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ")
             )
         )
     ),
     
     tabPanel("Glossary",
-        titlePanel("meaning of term"),
+        titlePanel("term exploration"),
         
         fluidRow(
             column(width = 10,
-                p("Model Model Model Model Model Model Model Model Model Model Model Model ")
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ")
             )
         )
     ),
@@ -249,7 +249,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
         
         fluidRow(
             column(width = 10,
-                p("Model Model Model Model Model Model Model Model Model Model Model Model ")
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder ")
             )
         )
     )

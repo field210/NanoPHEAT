@@ -71,42 +71,7 @@ shinyServer(function(input, output, session) {
         
         v$data=NULL
         
-        updateSelectizeInput(session, 
-            inputId='select_enm', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_endpoint', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_organism', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_matrix', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
+        reset_select(session, c("select_enm","select_endpoint", "select_organism","select_matrix"))
     } )
     
     # show upload ui
@@ -151,11 +116,7 @@ shinyServer(function(input, output, session) {
             distinct(Nanomaterial)%>% 
             .[[1]]
         
-        updateSelectizeInput(session, 
-            inputId='select_enm', 
-            choices=enm, 
-            server=F
-        )
+        choose_select(session,"select_enm", enm)
         
     })
     
@@ -179,29 +140,10 @@ shinyServer(function(input, output, session) {
             arrange(Endpoint)%>% 
             .[[1]]
         
-        updateSelectizeInput(session, 
-            inputId='select_endpoint', 
-            choices=endpoint, 
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_organism', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_matrix', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
+        choose_select(session,"select_endpoint", endpoint)
+      
+        
+        reset_select(session, c( "select_organism","select_matrix"))
         
         v$data_filtered=NULL
         v$plot=NULL
@@ -220,20 +162,8 @@ shinyServer(function(input, output, session) {
             arrange(Organism)%>% 
             .[[1]]
         
-        updateSelectizeInput(session,
-            inputId='select_organism', 
-            choices=organism,
-            server=F
-        )
-        updateSelectizeInput(session, 
-            inputId='select_matrix', 
-            choices="", 
-            options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
-            ),
-            server=F
-        )
+        choose_select(session,"select_organism", organism)
+        reset_select(session, c("select_matrix"))
         
         v$data_filtered=NULL
         v$plot=NULL
@@ -254,11 +184,7 @@ shinyServer(function(input, output, session) {
             arrange(Matrix)%>% 
             .[[1]]
         
-        updateSelectizeInput(session,
-            inputId='select_matrix', 
-            choices=matrix ,
-            server=F
-        )
+        choose_select(session,"select_matrix",  matrix)
         
         v$data_filtered=NULL
         v$plot=NULL
