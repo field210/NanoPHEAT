@@ -1,5 +1,4 @@
 
-
 # alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"
 
 # server.r
@@ -12,7 +11,7 @@ shinyServer(function(input, output, session) {
         column(width = 4,  
             wellPanel(style="min-height:200px;",
                 fileInput(
-                    inputId="file_data", 
+                    inputId="upload_data", 
                     label="Your dataset",
                     accept = c(
                         "text/csv",
@@ -68,7 +67,7 @@ shinyServer(function(input, output, session) {
     # clear data when change data source
     observeEvent(input$data_source,{
         alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
-        
+        v$source_user=NULL
         v$data=NULL
         
         reset_select(session, c("select_enm","select_endpoint", "select_organism","select_matrix"))
@@ -82,6 +81,11 @@ shinyServer(function(input, output, session) {
         v$ui_upload
     })
     
+    # observe the uploaded file
+    observeEvent(input$upload_data,{
+        v$source_user=input$upload_data
+    })
+    
     # define load button
     observeEvent(input$load_button, {
         alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
@@ -89,8 +93,7 @@ shinyServer(function(input, output, session) {
         if (input$data_source==1) {
             v$data=data_ceint
         } else {
-            user_datafile=input$file_data
-            if (is.null(user_datafile)) { 
+            if (is.null(v$source_user)) { 
                 alert_on(session,
                     "alert_file",
                     "No file found!",
@@ -98,7 +101,7 @@ shinyServer(function(input, output, session) {
                 )
                 return()
             }
-            data_user=read.csv(user_datafile$datapath, 
+            data_user=read.csv(v$source_user$datapath, 
                 header=as.logical(input$header),
                 sep=input$sep, 
                 quote=input$quote,
@@ -117,15 +120,12 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         choose_select(session,"select_enm", enm)
-        
     })
     
     # process uploaded data after click the button
-    output$table_upload <- renderDataTable(v$data,
+    output$table_load <- renderDataTable(v$data,
         options = list(pageLength = 10)
     )
-    
-    
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
@@ -141,8 +141,6 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         choose_select(session,"select_endpoint", endpoint)
-      
-        
         reset_select(session, c( "select_organism","select_matrix"))
         
         v$data_filtered=NULL

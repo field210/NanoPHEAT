@@ -1,11 +1,16 @@
+# list.of.packages <- c("ggplot2", "dplyr","gridExtra","shinyBS","minpack.lm")
+# 
+# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+# if(length(new.packages)) install.packages(new.packages)
+# 
+# # library packages
+# sapply(list.of.packages, library,character.only=T)
 
-# install package if not installed
-list.of.packages <- c("minpack.lm","ggplot2", "dplyr","gridExtra","shiny","shinyBS")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-# library packages
-sapply(list.of.packages, library,character.only=T)
+library("minpack.lm")
+library("ggplot2") 
+library("dplyr")
+library("gridExtra")
+library("shinyBS")
 
 # define public function
 # show alert

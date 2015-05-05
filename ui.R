@@ -61,7 +61,7 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
         
         fluidRow(
             column(width = 10,
-                dataTableOutput(outputId="table_upload")
+                dataTableOutput(outputId="table_load")
             )
         )
     ),
