@@ -231,6 +231,58 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
             column(width = 10,
                 p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ")
             )
+        ),
+        
+        fluidRow(
+            sidebarLayout(
+                sidebarPanel( width = 3,
+                    numericInput(
+                        inputId="pf", 
+                        label="Potency factor", 
+                        value=NULL
+                    ),
+                    actionButton("pf_button", "Use default"),
+                    
+                    tags$hr(),
+                    
+                    numericInput(
+                        inputId="m", 
+                        label="Product Dose in System, M (g/L)", 
+                        value=NULL
+                    ),
+                    numericInput(
+                        inputId="q", 
+                        label="ENM Content in Product, q (mg/g)", 
+                        value=NULL
+                    ),
+                    tags$hr(),
+                    actionButton("predict_button", "Predict the response",class="btn btn-primary")
+                    
+                ),
+                mainPanel(
+                    tabsetPanel(
+                        tabPanel("Predict", 
+                            
+                            
+                            bsAlert("alert_subset"),
+                            bsAlert("alert_plot"),
+                            bsAlert("alert_fit_method"),
+                            bsAlert("alert_curve"),
+                            bsAlert("alert_fitted"),
+                            
+                            plotOutput("predict")
+                        ),
+                        tabPanel("Conclusion", 
+                            p(""),
+                            
+                            bsAlert("alert_fit_stat"),
+                            
+                            verbatimTextOutput("conclusion")
+                        )
+                        
+                    )
+                )
+            )
         )
     ),
     

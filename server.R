@@ -232,7 +232,8 @@ shinyServer(function(input, output, session) {
         
         alert_off(session, c("bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
-        v$plot= plot_raw(v$data_filtered)
+        v$plot_raw= plot_raw(v$data_filtered)
+        v$plot= v$plot_raw
     })
     
     # show plot without fitting 
@@ -243,6 +244,7 @@ shinyServer(function(input, output, session) {
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
         v$fit=NULL
+        v$plot= v$plot_raw
         alert_off(session, c("bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
         
         v$fit_method=input$select_fit_method
@@ -381,8 +383,8 @@ shinyServer(function(input, output, session) {
         }
         
         alert_off(session, c("bs_alert_curve", "bs_alert_fitted"))
-        v$plot= plot_raw(v$data_filtered)
-        v$plot=v$plot+  stat_function(fun = v$func,color="blue")
+        
+        v$plot=v$plot_raw+  stat_function(fun = v$func,color="blue",data=data.frame(Dose=axis_range(v$data_filtered,"Dose"),Response=c(0)),n=500)
     }) 
     
     # plot fitting after click fit button
@@ -408,9 +410,6 @@ shinyServer(function(input, output, session) {
             )
             return()
         }
-        
-        # plot raw data
-        v$plot= plot_raw(v$data_filtered)
         
         if (v$fit_method=="linear") {
             fit=lm(Response~Dose, data=v$data_filtered)
@@ -447,9 +446,17 @@ shinyServer(function(input, output, session) {
                 }
             }
         
+        # set predict function 
+        v$func_predict=func
+        
         # set plot and fit if succeed 
-        v$plot=v$plot+ stat_function(fun =func, color="red")
+        v$plot=v$plot_raw+  stat_function(fun = v$func_predict,color="red",data=data.frame(Dose=axis_range(v$data_filtered,"Dose"),Response=c(0)),n=500)
+        
         v$fit=fit
+        
+        # also set plot to prediction
+        v$plot_predict=v$plot
+        
     })
     
     
@@ -471,6 +478,47 @@ shinyServer(function(input, output, session) {
         summary( v$fit)
     })
     
+    # show plot with fitting 
+    output$predict <- renderPlot({
+        v$plot_predict
+    }) 
+    
+    # read ceint nikc potency factor
+    pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
+    
+    # use default potency factor
+    observeEvent(input$pf_button,{
+        pf= pf_ceint%>% 
+            filter(Nanomaterial==input$select_enm , 
+                Matrix==input$select_matrix ) %>% 
+            select(PF) %>% 
+            .[[1]]
+        
+        updateNumericInput(session, 
+            inputId="pf",
+            value=pf
+        )  
+    })
+    
+    # plot prediction 
+    observeEvent(input$predict_button,{
+        
+        dose=input$q* input$m* input$pf
+        response=v$func_predict(dose)
+        
+        df=bind_rows(v$data_filtered,data.frame(Dose=dose,Response=response))
+        
+        dose_range=axis_range(df,"Dose")
+        response_range=axis_range(df,"Response")
+        
+        v$plot_predict=v$plot_raw +
+            coord_cartesian(xlim=dose_range,ylim=response_range)+ 
+            stat_function(fun =v$func_predict, color="red",data=data.frame(Dose=axis_range(df,"Dose"),Response=c(0)),n=500)+  
+            geom_point(x=dose,y=response,color="green",size=5)+ 
+           geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color="grey", linetype="dashed") +
+            geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color="grey", linetype="dashed")
+        
+    })
     
 })
 
