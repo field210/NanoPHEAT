@@ -1,5 +1,5 @@
 
-# alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"
+# alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted", "bs_alert_predict","bs_alert_predict_parameter","bs_alert_predict_stat"
 
 # server.r
 shinyServer(function(input, output, session) {
@@ -434,17 +434,17 @@ shinyServer(function(input, output, session) {
             if(!fit_test(session,fit)) {
                 return()
             } else{
-                    alert_off(session, c("bs_alert_fitted"))
-                    
-                    logistic_l=coef(fit)["l"] 
-                    logistic_k=coef(fit)["k"] 
-                    logistic_x0=coef(fit)["x0"] 
-                    func =function(x) { 
-                        logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
-                    }
-                    
+                alert_off(session, c("bs_alert_fitted"))
+                
+                logistic_l=coef(fit)["l"] 
+                logistic_k=coef(fit)["k"] 
+                logistic_x0=coef(fit)["x0"] 
+                func =function(x) { 
+                    logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
                 }
+                
             }
+        }
         
         # set predict function 
         v$func_predict=func
@@ -502,8 +502,39 @@ shinyServer(function(input, output, session) {
     
     # plot prediction 
     observeEvent(input$predict_button,{
+        v$plot_predict=v$plot
+        v$predict_stat=NULL
         
-        dose=input$q* input$m* input$pf
+        if (is.null(v$fit)) { 
+            alert_on(session, 
+                "alert_predict",
+                "No fitted model available!", 
+                "Please try to fit the dataset first."
+            )
+            
+            return()
+        }
+        
+        alert_off(session, c("bs_alert_predict"))
+        
+        pf=as.numeric(input$pf)
+        q=as.numeric(input$q)
+        m=as.numeric(input$m)
+        invalid=is.na(pf) | is.na(q) | is.na(m)
+        
+        if(invalid){
+            alert_on(session,
+                "alert_predict_parameter",
+                "Invalid parameter!", 
+                "Please input number only to proceed."
+            )
+            
+            return()
+        }
+        
+        alert_off(session, c("bs_alert_predict_parameter","bs_alert_predict_stat"))
+        
+        dose=q* m* pf
         response=v$func_predict(dose)
         
         df=bind_rows(v$data_filtered,data.frame(Dose=dose,Response=response))
@@ -515,10 +546,46 @@ shinyServer(function(input, output, session) {
             coord_cartesian(xlim=dose_range,ylim=response_range)+ 
             stat_function(fun =v$func_predict, color="red",data=data.frame(Dose=axis_range(df,"Dose"),Response=c(0)),n=500)+  
             geom_point(x=dose,y=response,color="green",size=5)+ 
-           geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color="grey", linetype="dashed") +
+            geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color="grey", linetype="dashed") +
             geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color="grey", linetype="dashed")
+        
+        
+        v$predict_stat=paste0( "With an applied dose of ",
+            signif(  dose,3) ,
+            " mg/L of ",
+            input$select_enm ,
+            " as released from a ",
+            input$select_matrix,
+            " matrix, with a resulting potency factor of ",
+            input$pf,
+            ", one could expect the ",
+            input$select_endpoint ,
+            " of ",
+            input$select_organism,
+            " to be ",
+            signif(  response,3),
+            " times More than a control system with no exposure to ",
+            input$select_enm ,
+            ".")
         
     })
     
+    # show prediction statement 
+    output$predict_stat <- renderText({
+        if (is.null(v$predict_stat)) { 
+            alert_on(session, 
+                "alert_predict_stat",
+                "No conclusion available!", 
+                "Please provide your parameters and predict the response first.",
+                "info",  
+            )
+            
+            return()
+        }
+        
+        alert_off(session, c("bs_alert_predict_stat"))
+        
+        v$predict_stat
+    })
 })
 

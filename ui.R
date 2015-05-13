@@ -2,8 +2,9 @@
 source("function.R")
 
 # ui.r
-shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
-    
+shinyUI(navbarPage(
+    title=strong(img(src="Tian.png"),"NanoPHEAT"), 
+    theme = "bootstrap.min.css",
     tabPanel("Introduction",
         fluidPage(
             titlePanel("Nano Product Hazard and Exposure Assessment Tool (NanoPHEAT)"),
@@ -262,22 +263,19 @@ shinyUI(navbarPage("NanoPHEAT", theme = "bootstrap.min.css",
                 mainPanel(
                     tabsetPanel(
                         tabPanel("Predict", 
+                            p(""),
                             
-                            
-                            bsAlert("alert_subset"),
-                            bsAlert("alert_plot"),
-                            bsAlert("alert_fit_method"),
-                            bsAlert("alert_curve"),
-                            bsAlert("alert_fitted"),
+                            bsAlert("alert_predict"),
+                            bsAlert("alert_predict_parameter"),
                             
                             plotOutput("predict")
                         ),
                         tabPanel("Conclusion", 
                             p(""),
                             
-                            bsAlert("alert_fit_stat"),
+                            bsAlert("alert_predict_stat"),
                             
-                            verbatimTextOutput("conclusion")
+                            textOutput("predict_stat")
                         )
                         
                     )
