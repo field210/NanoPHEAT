@@ -1,6 +1,15 @@
 
 # alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted", "bs_alert_predict","bs_alert_predict_parameter","bs_alert_predict_stat"
 
+# read alert notes
+alert_error_row=nrow(alert_error)
+    
+# read ceint nikc data
+data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
+
+# read ceint nikc potency factor
+pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
+
 # server.r
 shinyServer(function(input, output, session) {
     # create reactive value for resetting
@@ -61,12 +70,9 @@ shinyServer(function(input, output, session) {
     )
     
     
-    # read ceint nikc data
-    data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
-    
     # clear data when change data source
     observeEvent(input$data_source,{
-        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 1:alert_row)
         v$source_user=NULL
         v$data=NULL
         
@@ -88,17 +94,13 @@ shinyServer(function(input, output, session) {
     
     # define load button
     observeEvent(input$load_button, {
-        alert_off(session, c("bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 1:alert_row)
         
         if (input$data_source==1) {
             v$data=data_ceint
         } else {
             if (is.null(v$source_user)) { 
-                alert_on(session,
-                    "alert_file",
-                    "No file found!",
-                    "Please select a file to proceed."
-                )
+                alert_on(session,1)
                 return()
             }
             data_user=read.csv(v$source_user$datapath, 
@@ -194,16 +196,12 @@ shinyServer(function(input, output, session) {
                 input$select_endpoint=="" | 
                 input$select_organism=="" | 
                 input$select_matrix=="") {
-            alert_on(session, 
-                "alert_filter",  
-                "No option selected!", 
-                "Please select options above."
-            )
+            alert_on(session, 2  )
             
             return()
         }
         
-        alert_off(session, c("bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 2:alert_row)
         
         v$data_filtered=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -221,16 +219,12 @@ shinyServer(function(input, output, session) {
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
         if (is.null(v$data_filtered)) { 
-            alert_on(session, 
-                "alert_subset", 
-                "No dataset selected!",  
-                "Please select targeted dataset in the \"filter\" tab before plot."
-            )
+            alert_on(session,3 )
             
             return()
         }
         
-        alert_off(session, c("bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 3)
         
         v$plot_raw= plot_raw(v$data_filtered)
         v$plot= v$plot_raw
@@ -245,7 +239,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$select_fit_method,{
         v$fit=NULL
         v$plot= v$plot_raw
-        alert_off(session, c("bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 5:alert_row)
         
         v$fit_method=input$select_fit_method
         
@@ -361,28 +355,20 @@ shinyServer(function(input, output, session) {
     # show function plot
     observeEvent(input$curve_button, { 
         if(is.null( v$plot)) { 
-            alert_on(session, 
-                "alert_plot", 
-                "No plot found!", 
-                "Please plot dataset to proceed."
-            )
+            alert_on(session, 4)
             
             return()
         }
         
-        alert_off(session,c("bs_alert_plot", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session,4:alert_row)
         
         if(is.null( v$func(0))) { 
-            alert_on(session,
-                "alert_curve",
-                "Invalid parameter!", 
-                "Please input number only to proceed."
-            )
+            alert_on(session,6)
             
             return()
         }
         
-        alert_off(session, c("bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 6:alert_row)
         
         v$plot=v$plot_raw+  stat_function(fun = v$func,color="blue",data=data.frame(Dose=axis_range(v$data_filtered,"Dose"),Response=c(0)),n=500)
     }) 
@@ -392,22 +378,14 @@ shinyServer(function(input, output, session) {
         v$fit=NULL
         
         if(is.null( v$plot)) {
-            alert_on(session, 
-                "alert_plot", 
-                "No plot found!", 
-                "Please plot dataset to proceed."
-            )
+            alert_on(session, 4)
             return()
         }
         
-        alert_off(session, c("bs_alert_plot", "bs_alert_curve", "bs_alert_fitted"))
+        alert_off(session, 4:alert_row)
         
         if(v$fit_method=="") {
-            alert_on(session, 
-                "alert_fit_method", 
-                "No fitting method selected!",
-                "Please select a fitting method to proceed."
-            )
+            alert_on(session, 5)
             return()
         }
         
@@ -434,7 +412,7 @@ shinyServer(function(input, output, session) {
             if(!fit_test(session,fit)) {
                 return()
             } else{
-                alert_off(session, c("bs_alert_fitted"))
+                alert_off(session, 7:alert_row)
                 
                 logistic_l=coef(fit)["l"] 
                 logistic_k=coef(fit)["k"] 
@@ -463,17 +441,12 @@ shinyServer(function(input, output, session) {
     # show fitting statistics 
     output$fit_stat <- renderPrint({
         if (is.null(v$fit)) { 
-            alert_on(session, 
-                "alert_fit_stat",
-                "No fitting statistics available!", 
-                "Please try to fit the dataset first.",
-                "info",  
-            )
+            alert_on(session, 1 ,alert=alert_info)
             
             return(invisible(NULL))
         }
         
-        alert_off(session, c("bs_alert_fit_stat"))
+        alert_off(session, 1,alert=alert_info)
         
         summary( v$fit)
     })
@@ -482,10 +455,7 @@ shinyServer(function(input, output, session) {
     output$predict <- renderPlot({
         v$plot_predict
     }) 
-    
-    # read ceint nikc potency factor
-    pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
-    
+      
     # use default potency factor
     observeEvent(input$pf_button,{
         pf= pf_ceint%>% 
@@ -506,16 +476,12 @@ shinyServer(function(input, output, session) {
         v$predict_stat=NULL
         
         if (is.null(v$fit)) { 
-            alert_on(session, 
-                "alert_predict",
-                "No fitted model available!", 
-                "Please try to fit the dataset first."
-            )
+            alert_on(session, 9 )
             
             return()
         }
         
-        alert_off(session, c("bs_alert_predict"))
+        alert_off(session, 9:alert_row)
         
         pf=as.numeric(input$pf)
         q=as.numeric(input$q)
@@ -523,17 +489,13 @@ shinyServer(function(input, output, session) {
         invalid=is.na(pf) | is.na(q) | is.na(m)
         
         if(invalid){
-            alert_on(session,
-                "alert_predict_parameter",
-                "Invalid parameter!", 
-                "Please input number only to proceed."
-            )
+            alert_on(session,10)
             
             return()
         }
         
-        alert_off(session, c("bs_alert_predict_parameter","bs_alert_predict_stat"))
-        
+        alert_off(session,10:alert_row)
+       
         dose=q* m* pf
         response=v$func_predict(dose)
         
@@ -573,18 +535,11 @@ shinyServer(function(input, output, session) {
     # show prediction statement 
     output$predict_stat <- renderText({
         if (is.null(v$predict_stat)) { 
-            alert_on(session, 
-                "alert_predict_stat",
-                "No conclusion available!", 
-                "Please provide your parameters and predict the response first.",
-                "info",  
-            )
-            
+            alert_on(session, 2, alert=alert_info)  
             return()
         }
         
-        alert_off(session, c("bs_alert_predict_stat"))
-        
+        alert_off(session, 2, alert=alert_info)    
         v$predict_stat
     })
 })

@@ -207,7 +207,8 @@ shinyUI(navbarPage(
                             bsAlert("alert_plot"),
                             bsAlert("alert_fit_method"),
                             bsAlert("alert_curve"),
-                            bsAlert("alert_fitted"),
+                            bsAlert("alert_fitted_initial"),
+                            bsAlert("alert_fitted_converge"),
                             
                             plotOutput("plot")
                         ),
