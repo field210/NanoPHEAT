@@ -1,15 +1,4 @@
 
-# alert: "bs_alert_file", "bs_alert_filter", "bs_alert_subset", "bs_alert_plot", "bs_alert_fit_method", "bs_alert_curve", "bs_alert_fitted", "bs_alert_predict","bs_alert_predict_parameter","bs_alert_predict_stat"
-
-# read alert notes
-alert_error_row=nrow(alert_error)
-    
-# read ceint nikc data
-data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
-
-# read ceint nikc potency factor
-pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
-
 # server.r
 shinyServer(function(input, output, session) {
     # create reactive value for resetting
@@ -72,7 +61,7 @@ shinyServer(function(input, output, session) {
     
     # clear data when change data source
     observeEvent(input$data_source,{
-        alert_off(session, 1:alert_row)
+        alert_off(session, 1:alert_error_row)
         v$source_user=NULL
         v$data=NULL
         
@@ -94,7 +83,7 @@ shinyServer(function(input, output, session) {
     
     # define load button
     observeEvent(input$load_button, {
-        alert_off(session, 1:alert_row)
+        alert_off(session, 1:alert_error_row)
         
         if (input$data_source==1) {
             v$data=data_ceint
@@ -201,7 +190,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 2:alert_row)
+        alert_off(session, 2:alert_error_row)
         
         v$data_filtered=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -239,7 +228,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$select_fit_method,{
         v$fit=NULL
         v$plot= v$plot_raw
-        alert_off(session, 5:alert_row)
+        alert_off(session, 5:alert_error_row)
         
         v$fit_method=input$select_fit_method
         
@@ -360,7 +349,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session,4:alert_row)
+        alert_off(session,4:alert_error_row)
         
         if(is.null( v$func(0))) { 
             alert_on(session,6)
@@ -368,7 +357,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 6:alert_row)
+        alert_off(session, 6:alert_error_row)
         
         v$plot=v$plot_raw+  stat_function(fun = v$func,color="blue",data=data.frame(Dose=axis_range(v$data_filtered,"Dose"),Response=c(0)),n=500)
     }) 
@@ -382,7 +371,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 4:alert_row)
+        alert_off(session, 4:alert_error_row)
         
         if(v$fit_method=="") {
             alert_on(session, 5)
@@ -412,7 +401,7 @@ shinyServer(function(input, output, session) {
             if(!fit_test(session,fit)) {
                 return()
             } else{
-                alert_off(session, 7:alert_row)
+                alert_off(session, 7:alert_error_row)
                 
                 logistic_l=coef(fit)["l"] 
                 logistic_k=coef(fit)["k"] 
@@ -481,7 +470,7 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 9:alert_row)
+        alert_off(session, 9:alert_error_row)
         
         pf=as.numeric(input$pf)
         q=as.numeric(input$q)
@@ -494,16 +483,18 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session,10:alert_row)
+        alert_off(session,10:alert_error_row)
        
+        # calculate the effective dose
         dose=q* m* pf
         response=v$func_predict(dose)
         
-        df=bind_rows(v$data_filtered,data.frame(Dose=dose,Response=response))
-        
+        # determine new range for extrapolation
+        df=bind_rows(v$data_filtered,data.frame(Dose=dose,Response=response))  
         dose_range=axis_range(df,"Dose")
         response_range=axis_range(df,"Response")
         
+        # plot prediction together with model
         v$plot_predict=v$plot_raw +
             coord_cartesian(xlim=dose_range,ylim=response_range)+ 
             stat_function(fun =v$func_predict, color="red",data=data.frame(Dose=axis_range(df,"Dose"),Response=c(0)),n=500)+  
@@ -511,7 +502,13 @@ shinyServer(function(input, output, session) {
             geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color="grey", linetype="dashed") +
             geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color="grey", linetype="dashed")
         
+        # query the direction more? or less?
+        direction=v$data_filtered %>% 
+            select(Direction) %>% 
+            distinct(Direction)%>% 
+            .[[1]]
         
+        # prediction statement
         v$predict_stat=paste0( "With an applied dose of ",
             signif(  dose,3) ,
             " mg/L of ",
@@ -526,7 +523,9 @@ shinyServer(function(input, output, session) {
             input$select_organism,
             " to be ",
             signif(  response,3),
-            " times More than a control system with no exposure to ",
+            " times ",
+            direction,
+            "than a control system with no exposure to ",
             input$select_enm ,
             ".")
         
@@ -542,5 +541,12 @@ shinyServer(function(input, output, session) {
         alert_off(session, 2, alert=alert_info)    
         v$predict_stat
     })
+    
+    # show glossary table
+    output$table_glossary <- renderDataTable(glossary,
+        options = list(pageLength = 10)
+    )
+    
+    
 })
 

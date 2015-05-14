@@ -3,8 +3,8 @@ source("function.R")
 
 # ui.r
 shinyUI(navbarPage(
-    title=strong(img(src="Tian.png"),"NanoPHEAT"), 
-    theme = "bootstrap.min.css",
+    title="NanoPHEAT", 
+    theme = "bootstrap.css",
     tabPanel("Introduction",
         fluidPage(
             titlePanel("Nano Product Hazard and Exposure Assessment Tool (NanoPHEAT)"),
@@ -16,6 +16,8 @@ shinyUI(navbarPage(
                     p("The data used in this model is obtained from published literatures. The exposure characterizations are done at Duke by CEINT collaborators. ")
                 )
             ),
+            
+            p(""),
             
             fluidRow(
                 column(width = 10,
@@ -33,7 +35,7 @@ shinyUI(navbarPage(
         
         fluidRow(
             column(width = 10,
-                p("This tool uses Choose dataset."),  
+                p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder "),  
                 wellPanel(
                     radioButtons(
                         inputId="data_source", 
@@ -286,11 +288,17 @@ shinyUI(navbarPage(
     ),
     
     tabPanel("Glossary",
-        titlePanel("term exploration"),
+        titlePanel("Glossary"),
         
         fluidRow(
             column(width = 10,
                 p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ")
+            )
+        ),
+        
+        fluidRow(
+            column(width = 10,
+                dataTableOutput(outputId="table_glossary")
             )
         )
     ),
@@ -301,6 +309,52 @@ shinyUI(navbarPage(
         fluidRow(
             column(width = 10,
                 p("placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder ")
+            )
+        ),
+        
+        fluidRow(
+            column(width = 2,   
+                img(
+                    src="tian.png",
+                    width = 120
+                )
+            ),
+            column(width = 8,   
+                h4("Yuan Tian", a(icon("envelope"), href="mailto:yt.210@duke.edu")),
+                p("Postdoctoral Associate"),
+                p("Duke University", a(icon("external-link-square"), href="http://www.ceint.duke.edu/profile/yuantian"),", Durham NC 27708 US")
+            )
+        ),
+        
+        p(""),
+        
+        fluidRow(
+            column(width = 2,   
+                img(
+                    src="hendren.png",
+                    width = 120
+                )
+            ),
+            column(width = 8,  
+                h4("Christine Hendren", a(icon("envelope"), href="mailto:christine.hendren@duke.edu")),
+                p("CEINT Executive Director"),
+                p("Duke University", a(icon("external-link-square"), href="http://www.ceint.duke.edu/profile/christine-hendren"),", Durham NC 27708 US")
+            )
+        ),
+        
+        p(""),
+        
+        fluidRow(
+            column(width = 2,   
+                img(
+                    src="wiesner.png",
+                    width = 120
+                )
+            ),
+            column(width = 8,  
+                h4("Mark Wiesner", a(icon("envelope"), href="mailto:wiesner@duke.edu")),
+                p("CEINT Director, Professor of Civil and Environmental Engineering"),
+                p("Duke University", a(icon("external-link-square"), href="http://wiesner.cee.duke.edu/"),", Durham NC 27708 US")
             )
         )
     )
