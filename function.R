@@ -1,3 +1,7 @@
+
+# clear
+rm(list = ls())
+
 # list.of.packages <- c("ggplot2", "dplyr","gridExtra","shinyBS","minpack.lm")
 # 
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -12,11 +16,21 @@ library("dplyr")
 library("gridExtra")
 library("shinyBS")
 
-# define public function
+# read ceint nikc data
+data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
 
-# read alert notes
+# read ceint nikc potency factor
+pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
+
+# read alert file
 alert_error=read.csv("alert_error.csv",stringsAsFactors=FALSE)
 alert_info=read.csv("alert_info.csv",stringsAsFactors=FALSE)
+alert_error_row=nrow(alert_error)
+
+# read ceint nikc glossary
+glossary=read.csv("glossary.csv",stringsAsFactors=FALSE)
+
+# define public function
 
 # show alert
 alert_on=function(session,id,alert=alert_error){
