@@ -224,109 +224,61 @@ shinyServer(function(input, output, session) {
         v$plot
     }) 
     
+    # initiate select_fit_method from data frame models
+    choose_select(session,"select_fit_method", models$term)
+    
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
+        if(input$select_fit_method==""){
+            return()
+        }
+        
         v$fit=NULL
         v$plot= v$plot_raw
         alert_off(session, 5:alert_error_row)
         
-        v$fit_method=input$select_fit_method
+        model_selected=models%>%
+            filter(term==input$select_fit_method)
         
-        if(v$fit_method=="linear"){
-            
-            v$formula=withMathJax('$$y=\\alpha+\\beta x$$')
-            v$func=function(x) { 
-                isolate({ 
-                    linear_alpha=as.numeric(input$linear_alpha)
-                    linear_beta=as.numeric(input$linear_beta)
-                    invalid=is.na(linear_alpha) | is.na(linear_beta) 
-                    func=linear_alpha * x + linear_beta
-                    ifelse(invalid ,return(NULL),return ( func ))
-                }) 
-            }
-            
-            v$parameter=wellPanel(
-                fluidRow(
-                    strong("Parameter initial value")
-                ),
-                
-                fluidRow(
-                    column(width = 4,
-                        numericInput(
-                            inputId="linear_alpha", 
-                            label=withMathJax('$$\\alpha$$'), 
-                            value=1
-                        )
-                    ),
-                    
-                    column(width = 4,
-                        numericInput(
-                            inputId="linear_beta", 
-                            label=withMathJax('$$\\beta$$'), 
-                            value=0
-                        )
-                    )
-                ),
-                
-                fluidRow(
-                    actionButton("curve_button", "Show curve using parameter initial value",class="btn btn-primary")
-                )
-            )
-        }
+        v$fit_method=model_selected%>%
+            select(term) %>% 
+            .[[1]]
         
-        if(v$fit_method=="logistic"){
-            v$formula=withMathJax('$$y=\\frac{L}{1+e^{-k(x-x_0)}}$$')
-            v$func=function(x) { 
-                isolate({ 
-                    logistic_l=as.numeric(input$logistic_l)
-                    logistic_k=as.numeric(input$logistic_k)
-                    logistic_x0=as.numeric(input$logistic_x0)
-                    invalid=is.na(logistic_l) | is.na(logistic_k) | is.na(logistic_x0)
-                    func=logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 )))
-                    ifelse(invalid ,return(NULL),return ( func ))
-                }) 
-            }
-            v$parameter=wellPanel(
-                fluidRow(
-                    strong("Parameter initial value")
-                ),
-                
-                fluidRow(
-                    column(width = 4,
-                        numericInput(
-                            inputId="logistic_l", 
-                            label=withMathJax('$$L$$'), 
-                            value=0.1
-                        )
-                    ),
-                    
-                    column(width = 4,
-                        numericInput(
-                            inputId="logistic_k", 
-                            label=withMathJax('$$k$$'), 
-                            value=1
-                        )
-                    ),
-                    
-                    column(width = 4,
-                        numericInput(
-                            inputId="logistic_x0", 
-                            label=withMathJax('$$x_0$$'), 
-                            value=5
-                        )
-                    )
-                ),
-                
-                fluidRow(
-                    actionButton("curve_button", "Show curve using parameter initial value",class="btn btn-primary")
-                )
-            )
-        }
+        v$formula=eval(parse(
+            text=model_selected%>%
+                select(formula) %>% 
+                .[[1]]
+        ))
+        
+        v$func=eval(parse(
+            text=model_selected%>%
+                select(func) %>% 
+                .[[1]]
+        ))
+        
+        parameter_title='wellPanel(
+        fluidRow(
+        strong("Parameter initial value")
+        )'
+        
+        parameter_content=model_selected%>%
+            select(ui) %>% 
+            .[[1]]
+        
+        parameter_button='fluidRow(
+        actionButton("curve_button", "Show curve using parameter initial value",class="btn btn-primary")
+    )
+        )'
+        
+        parameter=paste(parameter_title,parameter_content,parameter_button,sep=",")
+        
+        v$parameter=eval(parse(text=parameter))
+        
     })
     
     # show fitting formula 
     output$text_formula <- renderUI({
-        if (v$fit_method=="") { 
+        if (input$select_fit_method=="") { 
             return()
         }
         v$formula
@@ -335,7 +287,7 @@ shinyServer(function(input, output, session) {
     
     # show parameter control
     output$text_parameter <- renderUI({
-        if (v$fit_method=="") { 
+        if (input$select_fit_method=="") { 
             return()
         }
         v$parameter
@@ -444,7 +396,7 @@ shinyServer(function(input, output, session) {
     output$predict <- renderPlot({
         v$plot_predict
     }) 
-      
+    
     # use default potency factor
     observeEvent(input$pf_button,{
         pf= pf_ceint%>% 
@@ -484,7 +436,7 @@ shinyServer(function(input, output, session) {
         }
         
         alert_off(session,10:alert_error_row)
-       
+        
         # calculate the effective dose
         dose=q* m* pf
         response=v$func_predict(dose)

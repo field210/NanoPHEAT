@@ -171,10 +171,7 @@ shinyUI(navbarPage(
                     selectizeInput(
                         inputId="select_fit_method",
                         label="Fitting method", 
-                        choices = list(
-                            Linear=c(Linear="linear"),
-                            Nonlinear=c(Logistic="logistic",  Other="other")
-                        ),
+                        choices = NULL,
                         options = list(
                             placeholder = "Select an option",
                             onInitialize = I("function() { this.setValue(''); }")
