@@ -16,19 +16,6 @@ library("dplyr")
 library("gridExtra")
 library("shinyBS")
 
-# read ceint nikc data
-data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
-
-# read ceint nikc potency factor
-pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
-
-# read alert file
-alert_error=read.csv("alert_error.csv",stringsAsFactors=FALSE)
-alert_info=read.csv("alert_info.csv",stringsAsFactors=FALSE)
-alert_error_row=nrow(alert_error)
-
-# read ceint nikc glossary
-glossary=read.csv("glossary.csv",stringsAsFactors=FALSE)
 
 # define public function
 
@@ -48,7 +35,7 @@ alert_on=function(session,id,alert=alert_error){
         content = content,
         style=style,  
         append = FALSE 
-        )
+    )
 }
 
 # dismiss alert
@@ -59,7 +46,7 @@ alert_off=function(session, ids, alert=alert_error){
         closeAlert(
             session=session,
             alertId=alertId
-            )
+        )
     })
 }
 
@@ -132,3 +119,20 @@ fit_test=function(session,fit){
         }
     }
 }
+
+# read ceint nikc toxicity data
+data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
+
+# read ceint nikc potency factor
+pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
+
+# read alert file
+alert_error=read.csv("alert_error.csv",stringsAsFactors=FALSE)
+alert_info=read.csv("alert_info.csv",stringsAsFactors=FALSE)
+alert_error_row=nrow(alert_error)
+
+# read model file and update model select
+models=read.csv("models.csv",stringsAsFactors=FALSE)
+
+# read ceint nikc glossary
+glossary=read.csv("glossary.csv",stringsAsFactors=FALSE)
