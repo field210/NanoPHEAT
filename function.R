@@ -120,19 +120,11 @@ fit_test=function(session,fit){
     }
 }
 
-# read ceint nikc toxicity data
-data_ceint=read.csv("data_ceint.csv",stringsAsFactors=FALSE)
+# read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
+filenames <- list.files(pattern="\\.csv")
+filelist <- lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
+names(filelist) <-filenames
+invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
 
-# read ceint nikc potency factor
-pf_ceint=read.csv("pf_ceint.csv",stringsAsFactors=FALSE)
-
-# read alert file
-alert_error=read.csv("alert_error.csv",stringsAsFactors=FALSE)
-alert_info=read.csv("alert_info.csv",stringsAsFactors=FALSE)
+# count alert error file
 alert_error_row=nrow(alert_error)
-
-# read model file and update model select
-models=read.csv("models.csv",stringsAsFactors=FALSE)
-
-# read ceint nikc glossary
-glossary=read.csv("glossary.csv",stringsAsFactors=FALSE)
