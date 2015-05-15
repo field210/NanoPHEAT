@@ -121,9 +121,9 @@ fit_test=function(session,fit){
 }
 
 # read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
-filenames <- list.files(pattern="\\.csv")
-filelist <- lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
-names(filelist) <-filenames
+filenames = list.files(pattern="\\.csv")
+filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
+names(filelist) =filenames
 invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
 
 # count alert error file

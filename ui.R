@@ -258,23 +258,21 @@ shinyUI(navbarPage(
                     ),
                     tags$hr(),
                     actionButton("predict_button", "Predict the response",class="btn btn-primary")
-                    
                 ),
+                
                 mainPanel(
                     tabsetPanel(
                         tabPanel("Predict", 
                             p(""),
-                            
                             bsAlert("alert_predict"),
                             bsAlert("alert_predict_parameter"),
-                            
+                            bsAlert("alert_predicted"),
                             plotOutput("predict")
                         ),
+                        
                         tabPanel("Conclusion", 
                             p(""),
-                            
                             bsAlert("alert_predict_stat"),
-                            
                             textOutput("predict_stat")
                         )
                         

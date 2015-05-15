@@ -2,7 +2,7 @@
 # server.r
 shinyServer(function(input, output, session) {
     # create reactive value for resetting
-    v <- reactiveValues()
+    v = reactiveValues()
     
     # define upload ui
     v$ui_upload=  fluidRow(
@@ -69,7 +69,7 @@ shinyServer(function(input, output, session) {
     } )
     
     # show upload ui
-    output$ui_upload <- renderUI({
+    output$ui_upload = renderUI({
         if (input$data_source==1) { 
             return()
         }
@@ -114,7 +114,7 @@ shinyServer(function(input, output, session) {
     })
     
     # process uploaded data after click the button
-    output$table_load <- renderDataTable(v$data,
+    output$table_load = renderDataTable(v$data,
         options = list(pageLength = 10)
     )
     
@@ -123,6 +123,8 @@ shinyServer(function(input, output, session) {
         if(input$select_enm==""){
             return()
         }
+        
+        alert_off(session, 2:alert_error_row)
         
         endpoint=v$data %>% 
             filter(Nanomaterial==input$select_enm ) %>% 
@@ -143,6 +145,9 @@ shinyServer(function(input, output, session) {
         if(input$select_endpoint==""){
             return()
         }
+        
+        alert_off(session, 2:alert_error_row)
+        
         organism=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint ) %>% 
@@ -163,6 +168,8 @@ shinyServer(function(input, output, session) {
         if(input$select_organism==""){
             return()
         }
+        
+        alert_off(session, 2:alert_error_row)
         
         matrix=v$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -186,7 +193,6 @@ shinyServer(function(input, output, session) {
                 input$select_organism=="" | 
                 input$select_matrix=="") {
             alert_on(session, 2  )
-            
             return()
         }
         
@@ -200,7 +206,7 @@ shinyServer(function(input, output, session) {
     })
     
     # show filtered data after click the button
-    output$table_filtered <- renderDataTable(
+    output$table_filtered = renderDataTable(
         v$data_filtered
     )
     
@@ -209,27 +215,28 @@ shinyServer(function(input, output, session) {
     observeEvent(input$plot_button, { 
         if (is.null(v$data_filtered)) { 
             alert_on(session,3 )
-            
             return()
         }
         
-        alert_off(session, 3)
+        alert_off(session, 3:alert_error_row)
         
         v$plot_raw= plot_raw(v$data_filtered)
         v$plot= v$plot_raw
     })
     
     # show plot without fitting 
-    output$plot <- renderPlot({
+    output$plot = renderPlot({
         v$plot
     }) 
     
     # initiate select_fit_method from data frame models
     choose_select(session,"select_fit_method", models$term)
+    v$fit_method=""
     
     # when changing select_fit_method, set values to fit_method, formula, func, parameter
     observeEvent(input$select_fit_method,{
         if(input$select_fit_method==""){
+            v$fit_method=""
             return()
         }
         
@@ -273,11 +280,10 @@ shinyServer(function(input, output, session) {
         parameter=paste(parameter_title,parameter_content,parameter_button,sep=",")
         
         v$parameter=eval(parse(text=parameter))
-        
     })
     
     # show fitting formula 
-    output$text_formula <- renderUI({
+    output$text_formula = renderUI({
         if (input$select_fit_method=="") { 
             return()
         }
@@ -286,7 +292,7 @@ shinyServer(function(input, output, session) {
     
     
     # show parameter control
-    output$text_parameter <- renderUI({
+    output$text_parameter = renderUI({
         if (input$select_fit_method=="") { 
             return()
         }
@@ -297,7 +303,6 @@ shinyServer(function(input, output, session) {
     observeEvent(input$curve_button, { 
         if(is.null( v$plot)) { 
             alert_on(session, 4)
-            
             return()
         }
         
@@ -305,7 +310,6 @@ shinyServer(function(input, output, session) {
         
         if(is.null( v$func(0))) { 
             alert_on(session,6)
-            
             return()
         }
         
@@ -380,7 +384,7 @@ shinyServer(function(input, output, session) {
     
     
     # show fitting statistics 
-    output$fit_stat <- renderPrint({
+    output$fit_stat = renderPrint({
         if (is.null(v$fit)) { 
             alert_on(session, 1 ,alert=alert_info)
             
@@ -393,7 +397,7 @@ shinyServer(function(input, output, session) {
     })
     
     # show plot with fitting 
-    output$predict <- renderPlot({
+    output$predict = renderPlot({
         v$plot_predict
     }) 
     
@@ -418,7 +422,6 @@ shinyServer(function(input, output, session) {
         
         if (is.null(v$fit)) { 
             alert_on(session, 9 )
-            
             return()
         }
         
@@ -427,11 +430,10 @@ shinyServer(function(input, output, session) {
         pf=as.numeric(input$pf)
         q=as.numeric(input$q)
         m=as.numeric(input$m)
-        invalid=is.na(pf) | is.na(q) | is.na(m)
+        invalid=pf<0 | q<0 | m<0 | is.na(pf) | is.na(q) | is.na(m)
         
         if(invalid){
             alert_on(session,10)
-            
             return()
         }
         
@@ -453,6 +455,14 @@ shinyServer(function(input, output, session) {
             geom_point(x=dose,y=response,color="green",size=5)+ 
             geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color="grey", linetype="dashed") +
             geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color="grey", linetype="dashed")
+        
+        # if response less than 0, give a warning
+        if(response<0){
+            alert_on(session,11)
+            return()
+        }
+        
+        alert_off(session,11:alert_error_row)
         
         # query the direction more? or less?
         direction=v$data_filtered %>% 
@@ -477,14 +487,14 @@ shinyServer(function(input, output, session) {
             signif(  response,3),
             " times ",
             direction,
-            "than a control system with no exposure to ",
+            " than a control system with no exposure to ",
             input$select_enm ,
             ".")
         
     })
     
     # show prediction statement 
-    output$predict_stat <- renderText({
+    output$predict_stat = renderText({
         if (is.null(v$predict_stat)) { 
             alert_on(session, 2, alert=alert_info)  
             return()
@@ -495,7 +505,7 @@ shinyServer(function(input, output, session) {
     })
     
     # show glossary table
-    output$table_glossary <- renderDataTable(glossary,
+    output$table_glossary = renderDataTable(glossary,
         options = list(pageLength = 10)
     )
     
