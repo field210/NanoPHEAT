@@ -244,21 +244,21 @@ shinyServer(function(input, output, session) {
         v$plot= v$plot_raw
         alert_off(session, 5:alert_error_row)
         
-        model_selected=models%>%
+        v$model_selected=models%>%
             filter(term==input$select_fit_method)
         
-        v$fit_method=model_selected%>%
+        v$fit_method=v$model_selected%>%
             select(term) %>% 
             .[[1]]
         
         v$formula=eval(parse(
-            text=model_selected%>%
+            text=v$model_selected%>%
                 select(formula) %>% 
                 .[[1]]
         ))
         
         v$func=eval(parse(
-            text=model_selected%>%
+            text=v$model_selected%>%
                 select(func) %>% 
                 .[[1]]
         ))
@@ -268,7 +268,7 @@ shinyServer(function(input, output, session) {
         strong('Parameter initial value')
         )"
         
-        parameter_content=model_selected%>%
+        parameter_content=v$model_selected%>%
             select(ui) %>% 
             .[[1]]
         
@@ -334,43 +334,23 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        if (v$fit_method=='linear') {
-            fit=lm(Response~Dose, data=v$data_filtered)
-            linear_alpha=coef(fit)['Dose']
-            linear_beta=coef(fit)['(Intercept)'] 
-            func =function(x) { 
-                linear_alpha * x + linear_beta
-            }
-        } 
+        fit=eval(parse(
+            text=v$model_selected%>%
+                select(fitting) %>% 
+                .[[1]]
+        ))
         
-        if(v$fit_method=='logistic'){
-            fit=try(
-                nlsLM(Response~l / (1 + exp(-k * (Dose - x0 ))),
-                    data=v$data_filtered, 
-                    start = list(l=input$logistic_l, 
-                        k=input$logistic_k, 
-                        x0=input$logistic_x0)
-                ),
-                silent = T
-            )
-            
-            if(!fit_test(session,fit)) {
-                return()
-            } else{
-                alert_off(session, 7:alert_error_row)
-                
-                logistic_l=coef(fit)['l'] 
-                logistic_k=coef(fit)['k'] 
-                logistic_x0=coef(fit)['x0'] 
-                func =function(x) { 
-                    logistic_l / (1 + exp(-logistic_k * (x - logistic_x0 ))) 
-                }
-                
-            }
+        if(!fit_test(session,fit)) {
+            return()
+        } else{
+            alert_off(session, 7:alert_error_row)
+            # set predict function 
+            v$func_predict =eval(parse(
+                text=v$model_selected%>%
+                    select(fitted) %>% 
+                    .[[1]]
+            ))
         }
-        
-        # set predict function 
-        v$func_predict=func
         
         # set plot and fit if succeed 
         v$plot=v$plot_raw+  stat_function(fun = v$func_predict,color='red',data=data.frame(Dose=axis_range(v$data_filtered,'Dose'),Response=c(0)),n=500)
@@ -492,14 +472,14 @@ shinyServer(function(input, output, session) {
     })
     
     # show prediction statement 
-    output$predict_stat = renderText({
+    output$predict_stat = renderUI({
         if (is.null(v$predict_stat)) { 
             alert_on(session, 2, alert=alert_info)  
             return()
         }
         
         alert_off(session, 2, alert=alert_info)    
-        v$predict_stat
+        div(p(v$predict_stat),class='alert alert-success')
     })
     
     # show glossary table

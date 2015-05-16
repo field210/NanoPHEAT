@@ -6,7 +6,7 @@ shinyUI(
     fluidPage(
         list(tags$head(HTML("<link rel='icon', href='favicon.png', 
             type='image/png' />"))),
-        div(style='padding: 1px 0px; width: "100%";',
+        div(style='padding: 1px 0px; width: 100%;',
             titlePanel(
                 title='', 
                 windowTitle='Nano Product Hazard and Exposure Assessment Tool (NanoPHEAT)'
@@ -14,7 +14,10 @@ shinyUI(
         ),
         
         navbarPage(
-            title=div(img(src='favicon.png',width='32px'), strong('NanoPHEAT')), 
+            title=div(
+                img(src='favicon.png',width='32px'), 
+                strong('NanoPHEAT')
+                ), 
             theme = 'bootstrap.css',
             tabPanel('Introduction',
                 fluidPage(
@@ -254,7 +257,7 @@ shinyUI(
                                 tabPanel('Conclusion', 
                                     p(''),
                                     bsAlert('alert_predict_stat'),
-                                    textOutput('predict_stat')
+                                    uiOutput('predict_stat')
                                 )
                                 
                             )
