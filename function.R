@@ -10,6 +10,7 @@ rm(list = ls())
 # # library packages
 # sapply(list.of.packages, library,character.only=T)
 
+library("tools")
 library("minpack.lm")
 library("ggplot2") 
 library("dplyr")
