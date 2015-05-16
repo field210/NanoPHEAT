@@ -2,20 +2,20 @@
 # clear
 rm(list = ls())
 
-# list.of.packages <- c("ggplot2", "dplyr","gridExtra","shinyBS","minpack.lm")
+# list.of.packages <- c('ggplot2', 'dplyr','gridExtra','shinyBS','minpack.lm')
 # 
-# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,'Package'])]
 # if(length(new.packages)) install.packages(new.packages)
 # 
 # # library packages
 # sapply(list.of.packages, library,character.only=T)
 
-library("tools")
-library("minpack.lm")
-library("ggplot2") 
-library("dplyr")
-library("gridExtra")
-library("shinyBS")
+library('tools')
+library('minpack.lm')
+library('ggplot2') 
+library('dplyr')
+library('gridExtra')
+library('shinyBS')
 
 
 # define public function
@@ -31,7 +31,7 @@ alert_on=function(session,id,alert=alert_error){
     createAlert(
         session=session, 
         anchorId=anchorId, 
-        alertId=paste0("bs_", anchorId),  
+        alertId=paste0('bs_', anchorId),  
         title = title,  
         content = content,
         style=style,  
@@ -43,7 +43,7 @@ alert_on=function(session,id,alert=alert_error){
 alert_off=function(session, ids, alert=alert_error){
     sapply(ids,function(x) {
         anchorId=alert%>%filter(order==x) %>%select(anchorId)%>%.[[1]]
-        alertId=paste0("bs_", anchorId)
+        alertId=paste0('bs_', anchorId)
         closeAlert(
             session=session,
             alertId=alertId
@@ -57,10 +57,10 @@ reset_select=function(session,inputId){
         updateSelectizeInput(
             session=session, 
             inputId=x, 
-            choices="", 
+            choices='', 
             options=list(
-                placeholder="Select an option",
-                onInitialize=I("function() { this.setValue(''); }")
+                placeholder='Select an option',
+                onInitialize=I('function() { this.setValue(""); }')
             ),
             server=F
         )
@@ -88,19 +88,19 @@ axis_range=function(df,colname,extended=0.1){
 
 # plot raw data without curve and fitting
 plot_raw=function(df){
-    dose_range=axis_range(df,"Dose")
-    response_range=axis_range(df,"Response")
+    dose_range=axis_range(df,'Dose')
+    response_range=axis_range(df,'Response')
     
     ggplot( data=df, aes(x=Dose,y=Response)) +
         geom_point(size=5)+ 
         coord_cartesian(xlim=dose_range,ylim=response_range)+ 
-        labs(title = "Dose-response curve") + 
+        labs(title = 'Dose-response curve') + 
         theme_bw() + 
         theme(text=element_text(size=16), 
             plot.title=element_text(vjust=3), 
             axis.title.y=element_text(vjust=3), 
             axis.title.x=element_text(vjust=-3), 
-            plot.margin=unit(c(1, 1, 1, 1), "cm")
+            plot.margin=unit(c(1, 1, 1, 1), 'cm')
         )
 }
 
@@ -122,7 +122,7 @@ fit_test=function(session,fit){
 }
 
 # read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
-filenames = list.files(pattern="\\.csv")
+filenames = list.files(pattern='\\.csv')
 filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
 names(filelist) =filenames
 invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
