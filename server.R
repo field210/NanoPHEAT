@@ -1,15 +1,11 @@
 
 # server.r
 shinyServer(function(input, output, session) {
-    # create reactive value for resetting
-    rv = reactiveValues()
-    
+
     # clear data when change data source
     observeEvent(input$data_source,{
         alert_off(session, 'alert_file')
-        rv$source_user=NULL
-        rv$data=NULL
-        
+        reset_rv('source_user')
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
     } )
     
@@ -80,6 +76,7 @@ shinyServer(function(input, output, session) {
     # define load button
     observeEvent(input$load_button, {
         alert_off(session, 'alert_file')
+        reset_rv('data')
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
         
         if (input$data_source==1) {
@@ -117,6 +114,7 @@ shinyServer(function(input, output, session) {
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
+        reset_rv('data_filtered')
         if(input$select_enm==''){
             return()
         }
@@ -132,13 +130,11 @@ shinyServer(function(input, output, session) {
         
         choose_select(session,'select_endpoint', endpoint)
         reset_select(session, c( 'select_organism','select_matrix'))
-        
-        rv$data_filtered=NULL
-        rv$plot=NULL
     })
     
     # update organism select after changing endpoint value (level 3)
     observeEvent(input$select_endpoint, {
+        reset_rv('data_filtered')
         if(input$select_endpoint==''){
             return()
         }
@@ -155,13 +151,11 @@ shinyServer(function(input, output, session) {
         
         choose_select(session,'select_organism', organism)
         reset_select(session, c('select_matrix'))
-        
-        rv$data_filtered=NULL
-        rv$plot=NULL
     })
     
     # update matrix select after changing organism value (level 4)
     observeEvent(input$select_organism, {
+        reset_rv('data_filtered')
         if(input$select_organism==''){
             return()
         }
@@ -178,13 +172,11 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         choose_select(session,'select_matrix',  matrix)
-        
-        rv$data_filtered=NULL
-        rv$plot=NULL
     })
     
     # set to rv$data_filtered after click the button
     observeEvent(input$filter_button, { 
+        reset_rv('data_filtered')
         if (input$select_enm=='' | 
                 input$select_endpoint=='' | 
                 input$select_organism=='' | 
@@ -207,9 +199,9 @@ shinyServer(function(input, output, session) {
         rv$data_filtered
     )
     
-    
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
+        reset_rv('plot_raw')
         if (is.null(rv$data_filtered)) { 
             alert_on(session, 'alert_subset')
             return()
@@ -226,36 +218,35 @@ shinyServer(function(input, output, session) {
         rv$plot
     }) 
     
-    # initiate select_term from data frame models
-    choose_select(session,'select_term', models$term)
-    rv$term=''
+    # initiate select_model from data frame models
+    choose_select(session,'select_model', models$term)
     
-    # when changing select_term, set values to term, formula, func, parameter
-    observeEvent(input$select_term,{
-        if(input$select_term==''){
+    # when changing select_model, set values to term, formula, func, parameter
+    observeEvent(input$select_model,{
+        reset_rv('model')
+        if(input$select_model==''){
             rv$term=''
             return()
         }
         
-        rv$fitted=NULL
         rv$plot= rv$plot_raw
         alert_off(session, 'alert_fit_method')
         
-        rv$model_selected=models%>%
-            filter(term==input$select_term)
+        rv$model=models%>%
+            filter(term==input$select_model)
         
-        rv$term=rv$model_selected%>%
+        rv$term=rv$model%>%
             select(term) %>% 
             .[[1]]
         
         rv$formula=eval(parse(
-            text=rv$model_selected%>%
+            text=rv$model%>%
                 select(formula) %>% 
                 .[[1]]
         ))
         
         rv$func=eval(parse(
-            text=rv$model_selected%>%
+            text=rv$model%>%
                 select(func) %>% 
                 .[[1]]
         ))
@@ -265,7 +256,7 @@ shinyServer(function(input, output, session) {
         strong('Parameter initial value')
         )"
         
-        parameter_content=rv$model_selected%>%
+        parameter_content=rv$model%>%
             select(ui) %>% 
             .[[1]]
         
@@ -281,7 +272,7 @@ shinyServer(function(input, output, session) {
     
     # show fitting formula 
     output$text_formula = renderUI({
-        if (input$select_term=='') { 
+        if (input$select_model=='') { 
             return()
         }
         rv$formula
@@ -290,7 +281,7 @@ shinyServer(function(input, output, session) {
     
     # show parameter control
     output$text_parameter = renderUI({
-        if (input$select_term=='') { 
+        if (input$select_model=='') { 
             return()
         }
         rv$parameter
@@ -317,8 +308,7 @@ shinyServer(function(input, output, session) {
     
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
-        rv$fitted=NULL
-        
+        reset_rv('fitted')
         if(is.null( rv$plot)) {
             alert_on(session, 'alert_plot')
             return()
@@ -332,7 +322,7 @@ shinyServer(function(input, output, session) {
         }
         
         fit=eval(parse(
-            text=rv$model_selected%>%
+            text=rv$model%>%
                 select(fitting) %>% 
                 .[[1]]
         ))
@@ -345,15 +335,15 @@ shinyServer(function(input, output, session) {
         } else{
             alert_off(session, 'alert_fitted_initial')
             # set predict function 
-            rv$func_predict =eval(parse(
-                text=rv$model_selected%>%
+            rv$func_fitted =eval(parse(
+                text=rv$model%>%
                     select(fitted) %>% 
                     .[[1]]
             ))
         }
 
         # set plot and fit if succeed 
-        rv$plot=rv$plot_raw+  stat_function(fun = rv$func_predict,color='red',data=data.frame(Dose=axis_range(rv$data_filtered,'Dose'),Response=c(0)),n=500)
+        rv$plot=rv$plot_raw+  stat_function(fun = rv$func_fitted,color='red',data=data.frame(Dose=axis_range(rv$data_filtered,'Dose'),Response=c(0)),n=500)
         
         rv$fitted=fit
         
@@ -365,12 +355,9 @@ shinyServer(function(input, output, session) {
     output$fit_stat = renderPrint({
         if (is.null(rv$fitted)) { 
             alert_on(session, 'alert_fit_stat')
-            
             return(invisible(NULL))
         }
-        
         alert_off(session, 'alert_fit_stat',single=T,type='note')
-        
         summary( rv$fitted)
     })
     
@@ -395,9 +382,8 @@ shinyServer(function(input, output, session) {
     
     # plot prediction 
     observeEvent(input$predict_button,{
+        reset_rv('stat_predict')
         rv$plot_predict=rv$plot
-        rv$stat_predict=NULL
-        
         if (is.null(rv$fitted)) { 
             alert_on(session, 'alert_predict' )
             return()
@@ -419,7 +405,7 @@ shinyServer(function(input, output, session) {
         
         # calculate the effective dose
         dose=q* m* pf
-        response=rv$func_predict(dose)
+        response=rv$func_fitted(dose)
         
         # determine new range for extrapolation
         df=bind_rows(rv$data_filtered,data.frame(Dose=dose,Response=response))  
@@ -429,7 +415,7 @@ shinyServer(function(input, output, session) {
         # plot prediction together with model
         rv$plot_predict=rv$plot_raw +
             coord_cartesian(xlim=dose_range,ylim=response_range)+ 
-            stat_function(fun =rv$func_predict, color='red',data=data.frame(Dose=axis_range(df,'Dose'),Response=c(0)),n=500)+  
+            stat_function(fun =rv$func_fitted, color='red',data=data.frame(Dose=axis_range(df,'Dose'),Response=c(0)),n=500)+  
             geom_point(x=dose,y=response,color='green',size=5)+ 
             geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color='grey', linetype='dashed') +
             geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color='grey', linetype='dashed')
@@ -472,14 +458,14 @@ shinyServer(function(input, output, session) {
     })
     
     # show prediction statement 
-    output$predict_stat = renderUI({
+    output$predict_stat = renderPrint({
         if (is.null(rv$stat_predict)) { 
             alert_on(session, 'alert_predict_stat')  
-            return()
+            return(invisible())
         }
         
         alert_off(session, 'alert_predict_stat',single=T,type='note')    
-        div(p(rv$stat_predict),class='alert alert-success')
+        p(rv$stat_predict,class='alert alert-success lead')
     })
     
     # show glossary table

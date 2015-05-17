@@ -162,7 +162,7 @@ shinyUI(
                             tags$hr(),
                             
                             selectizeInput(
-                                inputId='select_term',
+                                inputId='select_model',
                                 label='Fitting method', 
                                 choices = NULL,
                                 options = list(
@@ -257,7 +257,7 @@ shinyUI(
                                 tabPanel('Conclusion', 
                                     p(''),
                                     bsAlert('alert_predict_stat'),
-                                    uiOutput('predict_stat')
+                                    htmlOutput('predict_stat')
                                 )
                                 
                             )

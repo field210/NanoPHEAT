@@ -20,6 +20,23 @@ library('shinyBS')
 
 # define public function
 
+# reset reactivevalue rv
+reset_rv=function(id, single=FALSE){
+    order_selected= rvs%>%
+        filter(value==id) %>%
+        select(order) %>%
+        .[[1]]
+    order_last=ifelse(single,order_selected,nrow(rvs) )
+    
+    sapply(order_selected:order_last,function(x) {
+        value_selected=rvs%>%
+            filter(order==x) %>%
+            select(value)%>%
+            .[[1]]
+      rv[[value_selected]]=NULL
+    })
+}
+
 # show alert
 alert_on=function(session,id){
     item=alert%>%filter(anchorId==id)
@@ -141,3 +158,6 @@ filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
 names(filelist) =filenames
 invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
 
+# create reactive value for resetting
+rv = reactiveValues()
+reset_rv('source_user')
