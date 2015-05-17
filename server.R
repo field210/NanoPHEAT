@@ -2,67 +2,13 @@
 # server.r
 shinyServer(function(input, output, session) {
     # create reactive value for resetting
-    v = reactiveValues()
-    
-    # define upload ui
-    v$ui_upload=  fluidRow(
-        column(width = 4,  
-            wellPanel(style='min-height:200px;',
-                fileInput(
-                    inputId='upload_data', 
-                    label='Your dataset',
-                    accept = c(
-                        'text/csv',
-                        'text/comma-separated-values',
-                        'text/tab-separated-values',
-                        'text/plain',
-                        '.csv'
-                    )
-                ),
-                p('Dataset template: ',
-                    a(href = 'NanoPHEAT.csv', 'NanoPHEAT.csv'))
-            )
-        ),
-        
-        column(width = 2, 
-            wellPanel(style='min-height:200px;',
-                radioButtons(
-                    inputId='header', 
-                    label = 'Header',
-                    choices =  c(Yes=TRUE, No=FALSE),
-                    selected =     TRUE
-                )
-            )
-        ),
-        
-        column(width = 2,
-            wellPanel(style='min-height:200px;',
-                radioButtons(
-                    inputId='sep', 
-                    label = 'Separator',
-                    choices =  c(Comma=',', Semicolon=';',  Tab='\t'),
-                    selected =  ','
-                )
-            )
-        ),
-        
-        column(width = 2,
-            wellPanel(style='min-height:200px;',
-                radioButtons(
-                    inputId='quote',
-                    label =  'Quote',
-                    choices =  c(None='', 'Double'='\"',   'Single'='\''),
-                    selected =  '\"'
-                )
-            )
-        )
-    )
+    rv = reactiveValues()
     
     # clear data when change data source
     observeEvent(input$data_source,{
-        alert_off(session, 1:alert_error_row)
-        v$source_user=NULL
-        v$data=NULL
+        alert_off(session, 'alert_file')
+        rv$source_user=NULL
+        rv$data=NULL
         
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
     } )
@@ -72,40 +18,91 @@ shinyServer(function(input, output, session) {
         if (input$data_source==1) { 
             return()
         }
-        v$ui_upload
+        fluidRow(
+            column(width = 4,  
+                wellPanel(style='min-height:200px;',
+                    fileInput(
+                        inputId='upload_data', 
+                        label='Your dataset',
+                        accept = c(
+                            'text/csv',
+                            'text/comma-separated-values',
+                            'text/tab-separated-values',
+                            'text/plain',
+                            '.csv'
+                        )
+                    ),
+                    p('Dataset template: ',
+                        a(href = 'NanoPHEAT.csv', 'NanoPHEAT.csv'))
+                )
+            ),
+            
+            column(width = 2, 
+                wellPanel(style='min-height:200px;',
+                    radioButtons(
+                        inputId='header', 
+                        label = 'Header',
+                        choices =  c(Yes=TRUE, No=FALSE),
+                        selected =     TRUE
+                    )
+                )
+            ),
+            
+            column(width = 2,
+                wellPanel(style='min-height:200px;',
+                    radioButtons(
+                        inputId='sep', 
+                        label = 'Separator',
+                        choices =  c(Comma=',', Semicolon=';',  Tab='\t'),
+                        selected =  ','
+                    )
+                )
+            ),
+            
+            column(width = 2,
+                wellPanel(style='min-height:200px;',
+                    radioButtons(
+                        inputId='quote',
+                        label =  'Quote',
+                        choices =  c(None='', 'Double'='\"',   'Single'='\''),
+                        selected =  '\"'
+                    )
+                )
+            )
+        )
     })
     
     # observe the uploaded file
     observeEvent(input$upload_data,{
-        v$source_user=input$upload_data
+        rv$source_user=input$upload_data
     })
     
     # define load button
     observeEvent(input$load_button, {
-        alert_off(session, 1:alert_error_row)
+        alert_off(session, 'alert_file')
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
         
         if (input$data_source==1) {
-            v$data=data_ceint
+            rv$data=data_ceint
         } else {
-            if (is.null(v$source_user)) { 
-                alert_on(session,1)
+            if (is.null(rv$source_user)) { 
+                alert_on(session,'alert_file')
                 return()
             }
-            data_user=read.csv(v$source_user$datapath, 
+            data_user=read.csv(rv$source_user$datapath, 
                 header=as.logical(input$header),
                 sep=input$sep, 
                 quote=input$quote,
                 stringsAsFactors=FALSE)
             
-            v$data=switch(input$data_source,
+            rv$data=switch(input$data_source,
                 '2'=data_user,
                 '3'=bind_rows(data_user,data_ceint)
             )
         }
         
         # initialize the enm select (level 1)
-        enm=v$data %>% 
+        enm=rv$data %>% 
             select(Nanomaterial) %>% 
             distinct(Nanomaterial)%>% 
             .[[1]]
@@ -114,7 +111,7 @@ shinyServer(function(input, output, session) {
     })
     
     # process uploaded data after click the button
-    output$table_load = renderDataTable(v$data,
+    output$table_load = renderDataTable(rv$data,
         options = list(pageLength = 10)
     )
     
@@ -124,9 +121,9 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 2:alert_error_row)
+        alert_off(session, 'alert_filter')
         
-        endpoint=v$data %>% 
+        endpoint=rv$data %>% 
             filter(Nanomaterial==input$select_enm ) %>% 
             select(Endpoint) %>% 
             distinct(Endpoint)%>% 
@@ -136,8 +133,8 @@ shinyServer(function(input, output, session) {
         choose_select(session,'select_endpoint', endpoint)
         reset_select(session, c( 'select_organism','select_matrix'))
         
-        v$data_filtered=NULL
-        v$plot=NULL
+        rv$data_filtered=NULL
+        rv$plot=NULL
     })
     
     # update organism select after changing endpoint value (level 3)
@@ -146,9 +143,9 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 2:alert_error_row)
+        alert_off(session, 'alert_filter')
         
-        organism=v$data %>% 
+        organism=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint ) %>% 
             select(Organism) %>% 
@@ -159,8 +156,8 @@ shinyServer(function(input, output, session) {
         choose_select(session,'select_organism', organism)
         reset_select(session, c('select_matrix'))
         
-        v$data_filtered=NULL
-        v$plot=NULL
+        rv$data_filtered=NULL
+        rv$plot=NULL
     })
     
     # update matrix select after changing organism value (level 4)
@@ -169,9 +166,9 @@ shinyServer(function(input, output, session) {
             return()
         }
         
-        alert_off(session, 2:alert_error_row)
+        alert_off(session, 'alert_filter')
         
-        matrix=v$data %>% 
+        matrix=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint, 
                 Organism==input$select_organism ) %>% 
@@ -182,23 +179,23 @@ shinyServer(function(input, output, session) {
         
         choose_select(session,'select_matrix',  matrix)
         
-        v$data_filtered=NULL
-        v$plot=NULL
+        rv$data_filtered=NULL
+        rv$plot=NULL
     })
     
-    # set to v$data_filtered after click the button
+    # set to rv$data_filtered after click the button
     observeEvent(input$filter_button, { 
         if (input$select_enm=='' | 
                 input$select_endpoint=='' | 
                 input$select_organism=='' | 
                 input$select_matrix=='') {
-            alert_on(session, 2  )
+            alert_on(session, 'alert_filter')
             return()
         }
         
-        alert_off(session, 2:alert_error_row)
+        alert_off(session, 'alert_filter')
         
-        v$data_filtered=v$data %>% 
+        rv$data_filtered=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
                 Endpoint==input$select_endpoint, 
                 Organism==input$select_organism,
@@ -207,58 +204,58 @@ shinyServer(function(input, output, session) {
     
     # show filtered data after click the button
     output$table_filtered = renderDataTable(
-        v$data_filtered
+        rv$data_filtered
     )
     
     
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
-        if (is.null(v$data_filtered)) { 
-            alert_on(session,3 )
+        if (is.null(rv$data_filtered)) { 
+            alert_on(session, 'alert_subset')
             return()
         }
         
-        alert_off(session, 3:alert_error_row)
+        alert_off(session, 'alert_subset')
         
-        v$plot_raw= plot_raw(v$data_filtered)
-        v$plot= v$plot_raw
+        rv$plot_raw= plot_raw(rv$data_filtered)
+        rv$plot= rv$plot_raw
     })
     
     # show plot without fitting 
     output$plot = renderPlot({
-        v$plot
+        rv$plot
     }) 
     
-    # initiate select_fit_method from data frame models
-    choose_select(session,'select_fit_method', models$term)
-    v$fit_method=''
+    # initiate select_term from data frame models
+    choose_select(session,'select_term', models$term)
+    rv$term=''
     
-    # when changing select_fit_method, set values to fit_method, formula, func, parameter
-    observeEvent(input$select_fit_method,{
-        if(input$select_fit_method==''){
-            v$fit_method=''
+    # when changing select_term, set values to term, formula, func, parameter
+    observeEvent(input$select_term,{
+        if(input$select_term==''){
+            rv$term=''
             return()
         }
         
-        v$fit=NULL
-        v$plot= v$plot_raw
-        alert_off(session, 5:alert_error_row)
+        rv$fitted=NULL
+        rv$plot= rv$plot_raw
+        alert_off(session, 'alert_fit_method')
         
-        v$model_selected=models%>%
-            filter(term==input$select_fit_method)
+        rv$model_selected=models%>%
+            filter(term==input$select_term)
         
-        v$fit_method=v$model_selected%>%
+        rv$term=rv$model_selected%>%
             select(term) %>% 
             .[[1]]
         
-        v$formula=eval(parse(
-            text=v$model_selected%>%
+        rv$formula=eval(parse(
+            text=rv$model_selected%>%
                 select(formula) %>% 
                 .[[1]]
         ))
         
-        v$func=eval(parse(
-            text=v$model_selected%>%
+        rv$func=eval(parse(
+            text=rv$model_selected%>%
                 select(func) %>% 
                 .[[1]]
         ))
@@ -268,7 +265,7 @@ shinyServer(function(input, output, session) {
         strong('Parameter initial value')
         )"
         
-        parameter_content=v$model_selected%>%
+        parameter_content=rv$model_selected%>%
             select(ui) %>% 
             .[[1]]
         
@@ -279,104 +276,107 @@ shinyServer(function(input, output, session) {
         
         parameter=paste(parameter_title,parameter_content,parameter_button,sep=',')
         
-        v$parameter=eval(parse(text=parameter))
+        rv$parameter=eval(parse(text=parameter))
     })
     
     # show fitting formula 
     output$text_formula = renderUI({
-        if (input$select_fit_method=='') { 
+        if (input$select_term=='') { 
             return()
         }
-        v$formula
+        rv$formula
     })
     
     
     # show parameter control
     output$text_parameter = renderUI({
-        if (input$select_fit_method=='') { 
+        if (input$select_term=='') { 
             return()
         }
-        v$parameter
+        rv$parameter
     })
     
     # show function plot
     observeEvent(input$curve_button, { 
-        if(is.null( v$plot)) { 
-            alert_on(session, 4)
+        if(is.null( rv$plot)) { 
+            alert_on(session, 'alert_plot')
             return()
         }
         
-        alert_off(session,4:alert_error_row)
+        alert_off(session, 'alert_plot')
         
-        if(is.null( v$func(0))) { 
-            alert_on(session,6)
+        if(is.null( rv$func(0))) { 
+            alert_on(session,'alert_curve')
             return()
         }
         
-        alert_off(session, 6:alert_error_row)
+        alert_off(session, 'alert_curve')
         
-        v$plot=v$plot_raw+  stat_function(fun = v$func,color='blue',data=data.frame(Dose=axis_range(v$data_filtered,'Dose'),Response=c(0)),n=500)
+        rv$plot=rv$plot_raw+  stat_function(fun = rv$func,color='blue',data=data.frame(Dose=axis_range(rv$data_filtered,'Dose'),Response=c(0)),n=500)
     }) 
     
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
-        v$fit=NULL
+        rv$fitted=NULL
         
-        if(is.null( v$plot)) {
-            alert_on(session, 4)
+        if(is.null( rv$plot)) {
+            alert_on(session, 'alert_plot')
             return()
         }
         
-        alert_off(session, 4:alert_error_row)
+        alert_off(session, 'alert_plot')
         
-        if(v$fit_method=='') {
-            alert_on(session, 5)
+        if(rv$term=='') {
+            alert_on(session, 'alert_fit_method')
             return()
         }
         
         fit=eval(parse(
-            text=v$model_selected%>%
+            text=rv$model_selected%>%
                 select(fitting) %>% 
                 .[[1]]
         ))
         
+#         print(fit)
+#         flush.console()
+        
         if(!fit_test(session,fit)) {
             return()
         } else{
-            alert_off(session, 7:alert_error_row)
+            alert_off(session, 'alert_fitted_initial')
             # set predict function 
-            v$func_predict =eval(parse(
-                text=v$model_selected%>%
+            rv$func_predict =eval(parse(
+                text=rv$model_selected%>%
                     select(fitted) %>% 
                     .[[1]]
             ))
         }
-        
+
         # set plot and fit if succeed 
-        v$plot=v$plot_raw+  stat_function(fun = v$func_predict,color='red',data=data.frame(Dose=axis_range(v$data_filtered,'Dose'),Response=c(0)),n=500)
+        rv$plot=rv$plot_raw+  stat_function(fun = rv$func_predict,color='red',data=data.frame(Dose=axis_range(rv$data_filtered,'Dose'),Response=c(0)),n=500)
         
-        v$fit=fit
+        rv$fitted=fit
         
         # also set plot to prediction
-        v$plot_predict=v$plot
+        rv$plot_predict=rv$plot
     })
     
     # show fitting statistics 
     output$fit_stat = renderPrint({
-        if (is.null(v$fit)) { 
-            alert_on(session, 1 ,alert=alert_info)
+        if (is.null(rv$fitted)) { 
+            alert_on(session, 'alert_fit_stat')
             
             return(invisible(NULL))
         }
         
-        alert_off(session, 1,alert=alert_info)
+        alert_off(session, 'alert_fit_stat',single=T,type='note')
         
-        summary( v$fit)
+        summary( rv$fitted)
     })
     
     # show plot with fitting 
     output$predict = renderPlot({
-        v$plot_predict
+        rv$plot_predict
     }) 
     
     # use default potency factor
@@ -395,15 +395,15 @@ shinyServer(function(input, output, session) {
     
     # plot prediction 
     observeEvent(input$predict_button,{
-        v$plot_predict=v$plot
-        v$predict_stat=NULL
+        rv$plot_predict=rv$plot
+        rv$stat_predict=NULL
         
-        if (is.null(v$fit)) { 
-            alert_on(session, 9 )
+        if (is.null(rv$fitted)) { 
+            alert_on(session, 'alert_predict' )
             return()
         }
         
-        alert_off(session, 9:alert_error_row)
+        alert_off(session,  'alert_predict' )
         
         pf=as.numeric(input$pf)
         q=as.numeric(input$q)
@@ -411,45 +411,45 @@ shinyServer(function(input, output, session) {
         invalid=pf<0 | q<0 | m<0 | is.na(pf) | is.na(q) | is.na(m)
         
         if(invalid){
-            alert_on(session,10)
+            alert_on(session,'alert_predict_parameter')
             return()
         }
         
-        alert_off(session,10:alert_error_row)
+        alert_off(session,'alert_predict_parameter')
         
         # calculate the effective dose
         dose=q* m* pf
-        response=v$func_predict(dose)
+        response=rv$func_predict(dose)
         
         # determine new range for extrapolation
-        df=bind_rows(v$data_filtered,data.frame(Dose=dose,Response=response))  
+        df=bind_rows(rv$data_filtered,data.frame(Dose=dose,Response=response))  
         dose_range=axis_range(df,'Dose')
         response_range=axis_range(df,'Response')
         
         # plot prediction together with model
-        v$plot_predict=v$plot_raw +
+        rv$plot_predict=rv$plot_raw +
             coord_cartesian(xlim=dose_range,ylim=response_range)+ 
-            stat_function(fun =v$func_predict, color='red',data=data.frame(Dose=axis_range(df,'Dose'),Response=c(0)),n=500)+  
+            stat_function(fun =rv$func_predict, color='red',data=data.frame(Dose=axis_range(df,'Dose'),Response=c(0)),n=500)+  
             geom_point(x=dose,y=response,color='green',size=5)+ 
             geom_segment(x=dose,y=response_range[1],xend=dose,yend=response, color='grey', linetype='dashed') +
             geom_segment(x=dose_range[1],y=response,xend=dose,yend=response, color='grey', linetype='dashed')
         
         # if response less than 0, give a warning
         if(response<0){
-            alert_on(session,11)
+            alert_on(session,'alert_predicted')
             return()
         }
         
-        alert_off(session,11:alert_error_row)
+        alert_off(session,'alert_predicted')
         
         # query the direction more? or less?
-        direction=v$data_filtered %>% 
+        direction=rv$data_filtered %>% 
             select(Direction) %>% 
             distinct(Direction)%>% 
             .[[1]]
         
         # prediction statement
-        v$predict_stat=paste0( 'With an applied dose of ',
+        rv$stat_predict=paste0( 'With an applied dose of ',
             signif(  dose,3) ,
             ' mg/L of ',
             input$select_enm ,
@@ -473,13 +473,13 @@ shinyServer(function(input, output, session) {
     
     # show prediction statement 
     output$predict_stat = renderUI({
-        if (is.null(v$predict_stat)) { 
-            alert_on(session, 2, alert=alert_info)  
+        if (is.null(rv$stat_predict)) { 
+            alert_on(session, 'alert_predict_stat')  
             return()
         }
         
-        alert_off(session, 2, alert=alert_info)    
-        div(p(v$predict_stat),class='alert alert-success')
+        alert_off(session, 'alert_predict_stat',single=T,type='note')    
+        div(p(rv$stat_predict),class='alert alert-success')
     })
     
     # show glossary table

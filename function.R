@@ -21,8 +21,8 @@ library('shinyBS')
 # define public function
 
 # show alert
-alert_on=function(session,id,alert=alert_error){
-    item=alert%>%filter(order==id)
+alert_on=function(session,id){
+    item=alert%>%filter(anchorId==id)
     anchorId=item %>%select(anchorId)%>%.[[1]]
     title=item %>%select(title)%>%.[[1]]
     content=item %>%select(content)%>%.[[1]]
@@ -40,9 +40,23 @@ alert_on=function(session,id,alert=alert_error){
 }
 
 # dismiss alert
-alert_off=function(session, ids, alert=alert_error){
-    sapply(ids,function(x) {
-        anchorId=alert%>%filter(order==x) %>%select(anchorId)%>%.[[1]]
+alert_off=function(session, id, single=FALSE, type='error'){
+    order_selected= alert%>%
+        filter(anchorId==id) %>%
+        select(order) %>%
+        .[[1]]
+    order_last=ifelse(single,order_selected,
+        alert%>%
+        filter(types==type) %>%
+        select(order) %>%
+        max 
+    )
+
+    sapply(order_selected:order_last,function(x) {
+        anchorId=alert%>%
+            filter(order==x) %>%
+            select(anchorId)%>%
+            .[[1]]
         alertId=paste0('bs_', anchorId)
         closeAlert(
             session=session,
@@ -108,12 +122,12 @@ plot_raw=function(df){
 fit_test=function(session,fit){
     if(length(fit)==1 ){
         # singular gradient matrix at initial parameter estimates
-        alert_on(session, 7 )
+        alert_on(session, 'alert_fitted_initial' )
         return(FALSE)
     } else {
         if(!fit$convInfo$isConv){
             # cannot converge, need change formula
-            alert_on(session, 8  )
+            alert_on(session, 'alert_fitted_converge'  )
             return(FALSE)
         } else{
             return(TRUE)
@@ -127,5 +141,3 @@ filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
 names(filelist) =filenames
 invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
 
-# count alert error file
-alert_error_row=nrow(alert_error)

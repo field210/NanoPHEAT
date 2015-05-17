@@ -162,7 +162,7 @@ shinyUI(
                             tags$hr(),
                             
                             selectizeInput(
-                                inputId='select_fit_method',
+                                inputId='select_term',
                                 label='Fitting method', 
                                 choices = NULL,
                                 options = list(
