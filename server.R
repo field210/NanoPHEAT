@@ -1,7 +1,9 @@
 
 # server.r
 shinyServer(function(input, output, session) {
-
+    # create reactive value for resetting
+    rv = reactiveValues()
+    reset_rv('source_user')
     # clear data when change data source
     observeEvent(input$data_source,{
         alert_off(session, 'alert_file')
@@ -49,8 +51,8 @@ shinyServer(function(input, output, session) {
                     radioButtons(
                         inputId='sep', 
                         label = 'Separator',
-                        choices =  c(Comma=',', Semicolon=';',  Tab='\t'),
-                        selected =  ','
+                        choices =  c('Comma'=',', 'Semicolon'=';',  'Tab'='\t'),
+                        selected = 'Comma'
                     )
                 )
             ),
@@ -60,8 +62,8 @@ shinyServer(function(input, output, session) {
                     radioButtons(
                         inputId='quote',
                         label =  'Quote',
-                        choices =  c(None='', 'Double'='\"',   'Single'='\''),
-                        selected =  '\"'
+                        choices =  c('None'='', 'Double'='\"',   'Single'='\''),
+                        selected =  'Double'
                     )
                 )
             )
@@ -225,7 +227,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$select_model,{
         reset_rv('model')
         if(input$select_model==''){
-            rv$term=''
+            reset_rv('model')
             return()
         }
         
@@ -252,8 +254,9 @@ shinyServer(function(input, output, session) {
         ))
         
         parameter_title="wellPanel(
-        fluidRow(
+        fluidRow(column(width = 12,
         strong('Parameter initial value')
+        )
         )"
         
         parameter_content=rv$model%>%
@@ -261,7 +264,7 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         parameter_button="fluidRow(
-        actionButton('curve_button', 'Show curve using parameter initial value',class='btn btn-primary')
+        div(actionButton('curve_button', 'Show curve using parameter initial value',class='btn btn-primary'),class='text-center')
     )
         )"
         
@@ -316,7 +319,7 @@ shinyServer(function(input, output, session) {
         
         alert_off(session, 'alert_plot')
         
-        if(rv$term=='') {
+        if(is.null(rv$term)) {
             alert_on(session, 'alert_fit_method')
             return()
         }

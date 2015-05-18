@@ -157,7 +157,7 @@ shinyUI(
                         sidebarPanel( width = 3,
                             strong('Plot'),
                             p(''),
-                            actionButton('plot_button', 'Plot selected data',class='btn btn-primary'),
+                            div(actionButton('plot_button', 'Plot selected data',class='btn btn-primary'),class='text-center'),
                             
                             tags$hr(),
                             
@@ -172,15 +172,14 @@ shinyUI(
                             ),
                             # show formula and fitting parameter
                             p(''),
+                            p(''),
                             
                             # workaround https://github.com/rstudio/shiny/issues/692
                             p(withMathJax()),
-                            
-                            strong('Formula'),
                             uiOutput('text_formula'),
                             
                             tags$hr(),
-                            actionButton('fit_button', 'Fit this model',class='btn btn-primary')
+                            div(actionButton('fit_button', 'Fit this model',class='btn btn-primary'),class='text-center')
                         ),
                         mainPanel(
                             tabsetPanel(
@@ -226,7 +225,7 @@ shinyUI(
                                 label='Potency factor', 
                                 value=NULL
                             ),
-                            actionButton('pf_button', 'Use default'),
+                            div(actionButton('pf_button', 'Use default'),class='text-center'),
                             
                             tags$hr(),
                             
@@ -241,7 +240,7 @@ shinyUI(
                                 value=NULL
                             ),
                             tags$hr(),
-                            actionButton('predict_button', 'Predict the response',class='btn btn-primary')
+                            div(actionButton('predict_button', 'Predict the response',class='btn btn-primary'),class='text-center')
                         ),
                         
                         mainPanel(
