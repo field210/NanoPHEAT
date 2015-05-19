@@ -21,7 +21,7 @@ library('shinyBS')
 # define public function
 
 # reset reactivevalue rv
-reset_rv=function(id, single=FALSE){
+reset_rv=function(v, id, single=FALSE){
     order_selected= rvs%>%
         filter(value==id) %>%
         select(order) %>%
@@ -33,13 +33,14 @@ reset_rv=function(id, single=FALSE){
             filter(order==x) %>%
             select(value)%>%
             .[[1]]
-      rv[[value_selected]]=NULL
+
+        v[[value_selected]]=NULL
     })
 }
 
 # show alert
-alert_on=function(session,id){
-    item=alert%>%filter(anchorId==id)
+alert_on=function(session, df, id){
+    item=df%>%filter(anchorId==id)
     anchorId=item %>%select(anchorId)%>%.[[1]]
     title=item %>%select(title)%>%.[[1]]
     content=item %>%select(content)%>%.[[1]]
@@ -57,20 +58,20 @@ alert_on=function(session,id){
 }
 
 # dismiss alert
-alert_off=function(session, id, single=FALSE, type='error'){
-    order_selected= alert%>%
+alert_off=function(session, df, id, single=FALSE, type='error'){
+    order_selected= df%>%
         filter(anchorId==id) %>%
         select(order) %>%
         .[[1]]
     order_last=ifelse(single,order_selected,
-        alert%>%
+        df%>%
         filter(types==type) %>%
         select(order) %>%
         max 
     )
 
     sapply(order_selected:order_last,function(x) {
-        anchorId=alert%>%
+        anchorId=df%>%
             filter(order==x) %>%
             select(anchorId)%>%
             .[[1]]
@@ -151,13 +152,3 @@ fit_test=function(session,fit){
         }
     }
 }
-
-# read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
-filenames = list.files(pattern='\\.csv')
-filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
-names(filelist) =filenames
-invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
-
-# create reactive value for resetting
-rv = reactiveValues()
-reset_rv('source_user')

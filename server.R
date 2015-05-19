@@ -1,15 +1,23 @@
 
+# read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
+filenames = list.files(pattern='.csv')
+filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
+names(filelist) =filenames
+invisible(lapply(filenames, function(x) assign(file_path_sans_ext(x),filelist[[x]],envir=.GlobalEnv)))
+
+
 # server.r
 shinyServer(function(input, output, session) {
     # create reactive value for resetting
     rv = reactiveValues()
-    reset_rv('source_user')
+    reset_rv(rv, id='source_user')
+    
     # clear data when change data source
     observeEvent(input$data_source,{
-        alert_off(session, 'alert_file')
-        reset_rv('source_user')
+        alert_off(session, alert, id= 'alert_file')
+        reset_rv(rv, id='source_user')
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
-    } )
+    })
     
     # show upload ui
     output$ui_upload = renderUI({
@@ -41,7 +49,7 @@ shinyServer(function(input, output, session) {
                         inputId='header', 
                         label = 'Header',
                         choices =  c(Yes=TRUE, No=FALSE),
-                        selected =     TRUE
+                        selected = TRUE
                     )
                 )
             ),
@@ -52,7 +60,7 @@ shinyServer(function(input, output, session) {
                         inputId='sep', 
                         label = 'Separator',
                         choices =  c('Comma'=',', 'Semicolon'=';',  'Tab'='\t'),
-                        selected = 'Comma'
+                        selected = ','
                     )
                 )
             ),
@@ -62,8 +70,8 @@ shinyServer(function(input, output, session) {
                     radioButtons(
                         inputId='quote',
                         label =  'Quote',
-                        choices =  c('None'='', 'Double'='\"',   'Single'='\''),
-                        selected =  'Double'
+                        choices =  c('None'='', 'Double'='\"', 'Single'='\''),
+                        selected =  '\"'
                     )
                 )
             )
@@ -77,15 +85,15 @@ shinyServer(function(input, output, session) {
     
     # define load button
     observeEvent(input$load_button, {
-        alert_off(session, 'alert_file')
-        reset_rv('data')
+        alert_off(session, alert, id= 'alert_file')
+        reset_rv(rv, id='data')
         reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
         
         if (input$data_source==1) {
             rv$data=data_ceint
         } else {
             if (is.null(rv$source_user)) { 
-                alert_on(session,'alert_file')
+                alert_on(session, alert, id='alert_file')
                 return()
             }
             data_user=read.csv(rv$source_user$datapath, 
@@ -116,12 +124,12 @@ shinyServer(function(input, output, session) {
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
-        reset_rv('data_filtered')
+        reset_rv(rv, id='data_filtered')
         if(input$select_enm==''){
             return()
         }
         
-        alert_off(session, 'alert_filter')
+        alert_off(session, alert, id= 'alert_filter')
         
         endpoint=rv$data %>% 
             filter(Nanomaterial==input$select_enm ) %>% 
@@ -136,12 +144,12 @@ shinyServer(function(input, output, session) {
     
     # update organism select after changing endpoint value (level 3)
     observeEvent(input$select_endpoint, {
-        reset_rv('data_filtered')
+        reset_rv(rv, id='data_filtered')
         if(input$select_endpoint==''){
             return()
         }
         
-        alert_off(session, 'alert_filter')
+        alert_off(session, alert, id= 'alert_filter')
         
         organism=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -157,12 +165,12 @@ shinyServer(function(input, output, session) {
     
     # update matrix select after changing organism value (level 4)
     observeEvent(input$select_organism, {
-        reset_rv('data_filtered')
+        reset_rv(rv, id='data_filtered')
         if(input$select_organism==''){
             return()
         }
         
-        alert_off(session, 'alert_filter')
+        alert_off(session, alert, id= 'alert_filter')
         
         matrix=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -178,16 +186,16 @@ shinyServer(function(input, output, session) {
     
     # set to rv$data_filtered after click the button
     observeEvent(input$filter_button, { 
-        reset_rv('data_filtered')
+        reset_rv(rv, id='data_filtered')
         if (input$select_enm=='' | 
                 input$select_endpoint=='' | 
                 input$select_organism=='' | 
                 input$select_matrix=='') {
-            alert_on(session, 'alert_filter')
+            alert_on(session, alert, id= 'alert_filter')
             return()
         }
         
-        alert_off(session, 'alert_filter')
+        alert_off(session, alert, id= 'alert_filter')
         
         rv$data_filtered=rv$data %>% 
             filter(Nanomaterial==input$select_enm , 
@@ -203,13 +211,13 @@ shinyServer(function(input, output, session) {
     
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
-        reset_rv('plot_raw')
+        reset_rv(rv, id='plot_raw')
         if (is.null(rv$data_filtered)) { 
-            alert_on(session, 'alert_subset')
+            alert_on(session, alert, id= 'alert_subset')
             return()
         }
         
-        alert_off(session, 'alert_subset')
+        alert_off(session, alert, id= 'alert_subset')
         
         rv$plot_raw= plot_raw(rv$data_filtered)
         rv$plot= rv$plot_raw
@@ -225,14 +233,14 @@ shinyServer(function(input, output, session) {
     
     # when changing select_model, set values to term, formula, func, parameter
     observeEvent(input$select_model,{
-        reset_rv('model')
+        reset_rv(rv, id='model')
         if(input$select_model==''){
-            reset_rv('model')
+            reset_rv(rv, id='model')
             return()
         }
         
         rv$plot= rv$plot_raw
-        alert_off(session, 'alert_fit_method')
+        alert_off(session, alert, id= 'alert_fit_method')
         
         rv$model=models%>%
             filter(term==input$select_model)
@@ -293,34 +301,34 @@ shinyServer(function(input, output, session) {
     # show function plot
     observeEvent(input$curve_button, { 
         if(is.null( rv$plot)) { 
-            alert_on(session, 'alert_plot')
+            alert_on(session, alert, id= 'alert_plot')
             return()
         }
         
-        alert_off(session, 'alert_plot')
+        alert_off(session, alert, id= 'alert_plot')
         
         if(is.null( rv$func(0))) { 
-            alert_on(session,'alert_curve')
+            alert_on(session, alert, id='alert_curve')
             return()
         }
         
-        alert_off(session, 'alert_curve')
+        alert_off(session, alert, id= 'alert_curve')
         
         rv$plot=rv$plot_raw+  stat_function(fun = rv$func,color='blue',data=data.frame(Dose=axis_range(rv$data_filtered,'Dose'),Response=c(0)),n=500)
     }) 
     
     # plot fitting after click fit button
     observeEvent(input$fit_button, { 
-        reset_rv('fitted')
+        reset_rv(rv, id='fitted')
         if(is.null( rv$plot)) {
-            alert_on(session, 'alert_plot')
+            alert_on(session, alert, id= 'alert_plot')
             return()
         }
         
-        alert_off(session, 'alert_plot')
+        alert_off(session, alert, id= 'alert_plot')
         
         if(is.null(rv$term)) {
-            alert_on(session, 'alert_fit_method')
+            alert_on(session, alert, id= 'alert_fit_method')
             return()
         }
         
@@ -336,7 +344,7 @@ shinyServer(function(input, output, session) {
         if(!fit_test(session,fit)) {
             return()
         } else{
-            alert_off(session, 'alert_fitted_initial')
+            alert_off(session, alert, id= 'alert_fitted_initial')
             # set predict function 
             rv$func_fitted =eval(parse(
                 text=rv$model%>%
@@ -357,10 +365,10 @@ shinyServer(function(input, output, session) {
     # show fitting statistics 
     output$fit_stat = renderPrint({
         if (is.null(rv$fitted)) { 
-            alert_on(session, 'alert_fit_stat')
+            alert_on(session, alert, id= 'alert_fit_stat')
             return(invisible(NULL))
         }
-        alert_off(session, 'alert_fit_stat',single=T,type='note')
+        alert_off(session, alert, id= 'alert_fit_stat',single=T,type='note')
         summary( rv$fitted)
     })
     
@@ -385,14 +393,14 @@ shinyServer(function(input, output, session) {
     
     # plot prediction 
     observeEvent(input$predict_button,{
-        reset_rv('stat_predict')
+        reset_rv(rv, id='stat_predict')
         rv$plot_predict=rv$plot
         if (is.null(rv$fitted)) { 
-            alert_on(session, 'alert_predict' )
+            alert_on(session, alert, id= 'alert_predict' )
             return()
         }
         
-        alert_off(session,  'alert_predict' )
+        alert_off(session, alert, id=  'alert_predict' )
         
         pf=as.numeric(input$pf)
         q=as.numeric(input$q)
@@ -400,11 +408,11 @@ shinyServer(function(input, output, session) {
         invalid=pf<0 | q<0 | m<0 | is.na(pf) | is.na(q) | is.na(m)
         
         if(invalid){
-            alert_on(session,'alert_predict_parameter')
+            alert_on(session, alert, id='alert_predict_parameter')
             return()
         }
         
-        alert_off(session,'alert_predict_parameter')
+        alert_off(session, alert, id='alert_predict_parameter')
         
         # calculate the effective dose
         dose=q* m* pf
@@ -425,11 +433,11 @@ shinyServer(function(input, output, session) {
         
         # if response less than 0, give a warning
         if(response<0){
-            alert_on(session,'alert_predicted')
+            alert_on(session, alert, id='alert_predicted')
             return()
         }
         
-        alert_off(session,'alert_predicted')
+        alert_off(session, alert, id='alert_predicted')
         
         # query the direction more? or less?
         direction=rv$data_filtered %>% 
@@ -463,11 +471,11 @@ shinyServer(function(input, output, session) {
     # show prediction statement 
     output$predict_stat = renderPrint({
         if (is.null(rv$stat_predict)) { 
-            alert_on(session, 'alert_predict_stat')  
+            alert_on(session, alert, id= 'alert_predict_stat')  
             return(invisible())
         }
         
-        alert_off(session, 'alert_predict_stat',single=T,type='note')    
+        alert_off(session, alert, id= 'alert_predict_stat',single=T,type='note')    
         p(rv$stat_predict,class='alert alert-success lead')
     })
     
