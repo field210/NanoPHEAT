@@ -65,7 +65,8 @@ shinyUI(
                         actionButton('load_button', 'Process dataset',class='btn btn-primary')
                     ),
                     column(width = 5,   
-                        bsAlert('alert_file')
+                        bsAlert('alert_file'),
+                        bsAlert('alert_format')
                     )
                 ),
                 

@@ -102,10 +102,16 @@ shinyServer(function(input, output, session) {
                 quote=input$quote,
                 stringsAsFactors=FALSE)
             
+            if(!identical(lapply(data_ceint, class),lapply(data_user, class))){
+                alert_on(session, alert, id='alert_format')
+                return()
+            } else{
+    
             rv$data=switch(input$data_source,
                 '2'=data_user,
                 '3'=bind_rows(data_user,data_ceint)
             )
+            }
         }
         
         # initialize the enm select (level 1)
