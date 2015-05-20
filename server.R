@@ -16,7 +16,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$data_source,{
         alert_off(session, alert, id= 'alert_file')
         reset_rv(rv, id='source_user')
-        reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
+        reset_select(session, selects, id = 'enm')
     })
     
     # show upload ui
@@ -87,7 +87,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$load_button, {
         alert_off(session, alert, id= 'alert_file')
         reset_rv(rv, id='data')
-        reset_select(session, c('select_enm','select_endpoint', 'select_organism','select_matrix'))
+        reset_select(session, selects, id = 'enm')
         
         if (input$data_source==1) {
             rv$data=data_ceint
@@ -145,7 +145,7 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         choose_select(session,'select_endpoint', endpoint)
-        reset_select(session, c( 'select_organism','select_matrix'))
+        reset_select(session, selects, id = 'organism')
     })
     
     # update organism select after changing endpoint value (level 3)
@@ -166,7 +166,7 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         choose_select(session,'select_organism', organism)
-        reset_select(session, c('select_matrix'))
+        reset_select(session, selects, id = 'matrix')
     })
     
     # update matrix select after changing organism value (level 4)

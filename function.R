@@ -84,12 +84,27 @@ alert_off=function(session, df, id, single=FALSE, type='error'){
 }
 
 # reset select options
-reset_select=function(session,inputId){
-    sapply(inputId,function(x) {
+reset_select=function(session, df, id){
+    order_selected= df%>%
+        filter(inputId==id) %>%
+        select(order) %>%
+        .[[1]]
+    order_last= nrow(df)
+    
+    sapply(order_selected:order_last,function(x) {
+        select_id=paste0('select_',df%>%
+                filter(order==x) %>%
+                select(inputId)%>%
+                .[[1]])
+        if_empty=df%>%
+            filter(order==x) %>%
+            select(empty)%>%
+            .[[1]]
+        
         updateSelectizeInput(
             session=session, 
-            inputId=x, 
-            choices='', 
+            inputId=select_id, 
+            choices=if(if_empty==1) '' else  NULL, 
             options=list(
                 placeholder='Select an option',
                 onInitialize=I('function() { this.setValue(""); }')
