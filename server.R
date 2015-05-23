@@ -344,9 +344,6 @@ shinyServer(function(input, output, session) {
                 .[[1]]
         ))
         
-#         print(fit)
-#         flush.console()
-        
         if(!fit_test(session,fit)) {
             return()
         } else{

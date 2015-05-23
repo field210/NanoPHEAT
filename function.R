@@ -151,16 +151,16 @@ plot_raw=function(df){
         )
 }
 
-# test if fit succeed
+# return true if fit succeed
 fit_test=function(session,fit){
     if(length(fit)==1 ){
         # singular gradient matrix at initial parameter estimates
-        alert_on(session, 'alert_fitted_initial' )
+        alert_on(session,alert, id=  'alert_fitted_initial' )
         return(FALSE)
     } else {
         if(!fit$convInfo$isConv){
             # cannot converge, need change formula
-            alert_on(session, 'alert_fitted_converge'  )
+            alert_on(session,alert, id=  'alert_fitted_converge'  )
             return(FALSE)
         } else{
             return(TRUE)

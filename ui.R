@@ -34,7 +34,7 @@ shinyUI(
                     
                     fluidRow(
                         column(width = 10,
-                            img(src='art.png', width = 800 )
+                            img(src='art.png',style="width: 90% ;")
                         )
                     )
                 )
