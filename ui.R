@@ -74,7 +74,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        dataTableOutput(outputId='table_load')
+                        DT::dataTableOutput(outputId='table_load')
                     )
                 )
             ),
@@ -139,7 +139,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        dataTableOutput(outputId='table_filtered')
+                        DT::dataTableOutput(outputId='table_filtered')
                     )
                 )
             ),
@@ -277,7 +277,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        dataTableOutput(outputId='table_glossary')
+                        DT::dataTableOutput(outputId='table_glossary')
                     )
                 )
             ),

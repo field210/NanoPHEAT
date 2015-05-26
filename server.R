@@ -124,9 +124,14 @@ shinyServer(function(input, output, session) {
     })
     
     # process uploaded data after click the button
-    output$table_load = renderDataTable(rv$data,
+    output$table_load = DT::renderDataTable({
+        if(!is.null(rv$data)){
+        datatable(rv$data,
+         style=   'bootstrap',
         options = list(pageLength = 10)
-    )
+        )
+        }
+    })
     
     # update endpoint select after changing enm value (level 2)
     observeEvent(input$select_enm, {
@@ -211,9 +216,14 @@ shinyServer(function(input, output, session) {
     })
     
     # show filtered data after click the button
-    output$table_filtered = renderDataTable(
-        rv$data_filtered
-    )
+    output$table_filtered =  DT::renderDataTable({
+        if(!is.null(rv$data_filtered)){
+        datatable(rv$data_filtered,
+            style=   'bootstrap',
+            options = list(pageLength = 10)
+        )
+        }
+    })
     
     # plot raw data after click plot button
     observeEvent(input$plot_button, { 
@@ -278,7 +288,7 @@ shinyServer(function(input, output, session) {
             .[[1]]
         
         parameter_button="fluidRow(
-        div(actionButton('curve_button', 'Show curve using parameter initial value',class='btn btn-primary'),class='text-center')
+        div(actionButton('curve_button', 'Show curve using these values',class='btn btn-primary'),class='text-center')
     )
         )"
         
@@ -468,7 +478,6 @@ shinyServer(function(input, output, session) {
             ' than a control system with no exposure to ',
             input$select_enm ,
             '.')
-        
     })
     
     # show prediction statement 
@@ -483,10 +492,12 @@ shinyServer(function(input, output, session) {
     })
     
     # show glossary table
-    output$table_glossary = renderDataTable(glossary,
-        options = list(pageLength = 10)
-    )
-    
+    output$table_glossary =   DT::renderDataTable({
+        datatable(glossary,
+            style=   'bootstrap',
+            options = list(pageLength = 10)
+        )
+    })
     
 })
 

@@ -16,6 +16,7 @@ library('ggplot2')
 library('dplyr')
 library('gridExtra')
 library('shinyBS')
+library('DT')
 
 
 # define public function
