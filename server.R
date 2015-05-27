@@ -265,6 +265,10 @@ shinyServer(function(input, output, session) {
             select(term) %>% 
             .[[1]]
         
+        rv$definition=rv$model%>%
+            select(definition) %>% 
+            .[[1]]
+        
         rv$formula=eval(parse(
             text=rv$model%>%
                 select(formula) %>% 
@@ -297,6 +301,14 @@ shinyServer(function(input, output, session) {
         rv$parameter=eval(parse(text=parameter))
     })
     
+    # show model definition
+    output$text_definition = renderText({
+        if (input$select_model=='') { 
+            return()
+        }
+        rv$definition
+    })
+    
     # show fitting formula 
     output$text_formula = renderUI({
         if (input$select_model=='') { 
@@ -304,7 +316,6 @@ shinyServer(function(input, output, session) {
         }
         rv$formula
     })
-    
     
     # show parameter control
     output$text_parameter = renderUI({

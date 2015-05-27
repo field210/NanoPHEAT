@@ -171,9 +171,9 @@ shinyUI(
                                     onInitialize = I('function() { this.setValue(""); }')
                                 )
                             ),
-                            # show formula and fitting parameter
-                            p(''),
-                            p(''),
+                            
+                            # show definition, formula and fitting parameter
+                            textOutput('text_definition'),
                             
                             # workaround https://github.com/rstudio/shiny/issues/692
                             p(withMathJax()),
