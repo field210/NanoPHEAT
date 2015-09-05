@@ -2,17 +2,17 @@
 # clear
 rm(list = ls())
 
-# list.of.packages <- c('ggplot2', 'dplyr','gridExtra','shinyBS','minpack.lm')
-# 
+# list.of.packages <- c('tools','ggplot2', 'dplyr','gridExtra','shinyBS','minpack.lm','DT')
+#
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,'Package'])]
 # if(length(new.packages)) install.packages(new.packages)
-# 
+#
 # # library packages
 # sapply(list.of.packages, library,character.only=T)
 
 library('tools')
 library('minpack.lm')
-library('ggplot2') 
+library('ggplot2')
 library('dplyr')
 library('gridExtra')
 library('shinyBS')
@@ -28,7 +28,7 @@ reset_rv=function(v, id, single=FALSE){
         select(order) %>%
         .[[1]]
     order_last=ifelse(single,order_selected,nrow(rvs) )
-    
+
     sapply(order_selected:order_last,function(x) {
         value_selected=rvs%>%
             filter(order==x) %>%
@@ -46,15 +46,15 @@ alert_on=function(session, df, id){
     title=item %>%select(title)%>%.[[1]]
     content=item %>%select(content)%>%.[[1]]
     style=item %>%select(style)%>%.[[1]]
-    
+
     createAlert(
-        session=session, 
-        anchorId=anchorId, 
-        alertId=paste0('bs_', anchorId),  
-        title = title,  
+        session=session,
+        anchorId=anchorId,
+        alertId=paste0('bs_', anchorId),
+        title = title,
         content = content,
-        style=style,  
-        append = FALSE 
+        style=style,
+        append = FALSE
     )
 }
 
@@ -68,7 +68,7 @@ alert_off=function(session, df, id, single=FALSE, type='error'){
         df%>%
         filter(types==type) %>%
         select(order) %>%
-        max 
+        max
     )
 
     sapply(order_selected:order_last,function(x) {
@@ -91,7 +91,7 @@ reset_select=function(session, df, id){
         select(order) %>%
         .[[1]]
     order_last= nrow(df)
-    
+
     sapply(order_selected:order_last,function(x) {
         select_id=paste0('select_',df%>%
                 filter(order==x) %>%
@@ -101,11 +101,11 @@ reset_select=function(session, df, id){
             filter(order==x) %>%
             select(empty)%>%
             .[[1]]
-        
+
         updateSelectizeInput(
-            session=session, 
-            inputId=select_id, 
-            choices=if(if_empty==1) '' else  NULL, 
+            session=session,
+            inputId=select_id,
+            choices=if(if_empty==1) '' else  NULL,
             options=list(
                 placeholder='Select an option',
                 onInitialize=I('function() { this.setValue(""); }')
@@ -118,9 +118,9 @@ reset_select=function(session, df, id){
 # choose select option
 choose_select=function(session,inputId,choices){
     updateSelectizeInput(
-        session=session, 
-        inputId=inputId, 
-        choices=choices, 
+        session=session,
+        inputId=inputId,
+        choices=choices,
         server=F
     )
 }
@@ -138,16 +138,16 @@ axis_range=function(df,colname,extended=0.1){
 plot_raw=function(df){
     dose_range=axis_range(df,'Dose')
     response_range=axis_range(df,'Response')
-    
+
     ggplot( data=df, aes(x=Dose,y=Response)) +
-        geom_point(size=5)+ 
-        coord_cartesian(xlim=dose_range,ylim=response_range)+ 
-        labs(title = 'Dose-response curve') + 
-        theme_bw() + 
-        theme(text=element_text(size=16), 
-            plot.title=element_text(vjust=3), 
-            axis.title.y=element_text(vjust=3), 
-            axis.title.x=element_text(vjust=-3), 
+        geom_point(size=5)+
+        coord_cartesian(xlim=dose_range,ylim=response_range)+
+        labs(title = 'Dose-response curve') +
+        theme_bw() +
+        theme(text=element_text(size=16),
+            plot.title=element_text(vjust=3),
+            axis.title.y=element_text(vjust=3),
+            axis.title.x=element_text(vjust=-3),
             plot.margin=unit(c(1, 1, 1, 1), 'cm')
         )
 }

@@ -25,9 +25,8 @@ shinyUI(
                     
                     fluidRow(
                         column(width = 10,
-                            p('This model provides the estimation of endpoint response based on the nanomaterial ambient concentration, matrix, potency factor, and organism.'),
-                            p('The user can choose the following mode: simple and advanced. The simple mode gives the calculated result based on the well-established database and settings. The advanced mode allows user to change source data, model setting and fitting control based on the user\'s needs.'),
-                            p('The data used in this model is obtained from published literatures. The exposure characterizations are done at Duke by CEINT collaborators. ')
+                            p('This model predicts an estimated exposure to materials of interest and superimpose this effective dose onto endpoint-specific dose-response curves for a variety of nanomaterials. This prediction base on the specific nanomaterial ambient concentration, matrix, potency factor, organism and endpoint.'),
+                            p('The data used in this model is obtained from published literatures. The exposure characterizations are done at Duke by CEINT collaborators. Users are also allowed to use their own data, which turns NanoPHEAT into a straightforward and expandable approach to use the existing toxicity data to offer insights on expected responses based on a series of exposure assumptions or based on specific scenario data.')
                         )
                     ),
                     p(''),
@@ -184,7 +183,7 @@ shinyUI(
                         ),
                         mainPanel(
                             tabsetPanel(
-                                tabPanel('Plot',  
+                                tabPanel('Plot and fit',  
                                     p(''),
                                     # show formula and fitting parameter
                                     uiOutput('text_parameter'),
