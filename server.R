@@ -1,5 +1,5 @@
 
-# read ceint pre-defined data: toxicity data, potency factor, alert file, model file , glossary
+# read ceint pre-defined data: toxicity data, matrix factor, alert file, model file , glossary
 filenames = list.files(pattern='.csv')
 filelist = lapply(filenames, function(x) read.csv(x,stringsAsFactors=FALSE) )
 names(filelist) =filenames
@@ -12,7 +12,7 @@ shinyServer(function(input, output, session) {
     rv = reactiveValues()
     reset_rv(rv, id='source_user')
     
-    # clear data when change data source
+    # clear data when change Data source
     observeEvent(input$data_source,{
         alert_off(session, alert, id= 'alert_file')
         reset_rv(rv, id='source_user')
@@ -401,7 +401,7 @@ shinyServer(function(input, output, session) {
         rv$plot_predict
     }) 
     
-    # use default potency factor
+    # use default matrix factor
     observeEvent(input$pf_button,{
         pf= pf_ceint%>% 
             filter(Nanomaterial==input$select_enm , 
@@ -476,7 +476,7 @@ shinyServer(function(input, output, session) {
             input$select_enm ,
             ' as released from a ',
             input$select_matrix,
-            ' matrix, with a resulting potency factor of ',
+            ' matrix, with a resulting matrix factor of ',
             input$pf,
             ', one could expect the ',
             input$select_endpoint ,

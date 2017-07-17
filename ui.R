@@ -25,7 +25,7 @@ shinyUI(
                     
                     fluidRow(
                         column(width = 10,
-                            p('This model predicts an estimated exposure to materials of interest and superimpose this effective dose onto endpoint-specific dose-response curves for a variety of nanomaterials. This prediction base on the specific nanomaterial ambient concentration, matrix, potency factor, organism and endpoint.'),
+                            p('This model predicts an estimated exposure to materials of interest and superimpose this effective dose onto endpoint-specific dose-response curves for a variety of nanomaterials. This prediction base on the specific nanomaterial ambient concentration, matrix, matrix factor, organism and endpoint.'),
                             p('The data used in this model is obtained from published literatures. The exposure characterizations are done at Duke by CEINT collaborators. Users are also allowed to use their own data, which turns NanoPHEAT into a straightforward and expandable approach to use the existing toxicity data to offer insights on expected responses based on a series of exposure assumptions or based on specific scenario data.')
                         )
                     ),
@@ -40,11 +40,11 @@ shinyUI(
             ),
             
             tabPanel('Load',
-                titlePanel('data source'),
+                titlePanel('Data source'),
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder '),  
+                        p(''),  
                         wellPanel(
                             radioButtons(
                                 inputId='data_source', 
@@ -83,7 +83,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder ')
+                        p('')
                     )
                 ),
                 
@@ -148,7 +148,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ')
+                        p(' ')
                     )
                 ),
                 
@@ -166,7 +166,7 @@ shinyUI(
                                 label='Fitting method', 
                                 choices = NULL,
                                 options = list(
-                                    placeholder = 'Select an option',
+                                   placeholder = 'Select an option',
                                     onInitialize = I('function() { this.setValue(""); }')
                                 )
                             ),
@@ -213,7 +213,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ')
+                        p(' ')
                     )
                 ),
                 
@@ -222,7 +222,7 @@ shinyUI(
                         sidebarPanel( width = 3,
                             numericInput(
                                 inputId='pf', 
-                                label='Potency factor', 
+                                label='Matrix factor', 
                                 value=NULL
                             ),
                             div(actionButton('pf_button', 'Use default'),class='text-center'),
@@ -270,7 +270,7 @@ shinyUI(
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder  ')
+                        p(' ')
                     )
                 ),
                 
@@ -282,11 +282,11 @@ shinyUI(
             ),
             
             tabPanel('About',
-                titlePanel('team'),
+                titlePanel('Team'),
                 
                 fluidRow(
                     column(width = 10,
-                        p('placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder ')
+                        p('')
                     )
                 ),
                 
