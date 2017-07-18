@@ -1,5 +1,10 @@
 name: NanoPHEAT
+title: NanoPHEAT
 account: yt210
-bundleId: 202571
-url: https://yt210.shinyapps.io/NanoPHEAT
 server: shinyapps.io
+appId: 41204
+bundleId: 906600
+url: https://yt210.shinyapps.io/NanoPHEAT/
+when: 1500324220.34823
+asMultiple: FALSE
+asStatic: FALSE
